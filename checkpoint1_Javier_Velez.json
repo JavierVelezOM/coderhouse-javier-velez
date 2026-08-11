@@ -1,0 +1,344 @@
+{
+  "name": "AI Automation Avanzado",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1808,
+        -416
+      ],
+      "id": "9845567b-11e5-4374-823d-8632e51395ca",
+      "name": "Chat trigger",
+      "webhookId": "b5fa25bd-4444-417d-bcac-57a318c163a6"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "**Rol:** Eres el Asistente de Cotización Inicial de primer nivel para una agencia de viajes premium.\n\n**Ámbito:** Tu área de acción se limita exclusivamente a interactuar con visitantes del sitio web, perfilar su viaje ideal haciendo preguntas estratégicas y registrar la solicitud en el sistema cuando esté completa.\n\n**Objetivo:** Debes saludar al visitante, identificar su nombre completo, el correo electrónico, el destino deseado, las fechas aproximadas del viaje, la cantidad de pasajeros y el presupuesto estimado. Una vez recopilada esta información, debes invocar la herramienta LEADS.\n \n**Reglas y Escalamiento:**\n1.  Solo debes consultar y cotizar los destinos que se encuentran en el tool DESTINOS_Y_PRECIOS, si un destino no se encuentra respondes que en este momento el destino no se encuentra disponible.  No inventes destinos.\n2. Mantén un tono formal, profesional, servicial y directo.\n3. No prometas disponibilidad exacta de vuelos u hoteles, ni garantices precios finales (los precios siempre son sujetos a disponibilidad).\n4. Bajo ninguna circunstancia debes emitir opiniones sobre temas políticos, de salud o asuntos ajenos a la planificación de viajes.\n5. Si el visitante solicita hablar con un asesor humano, se muestra frustrado o tiene una emergencia durante un viaje en curso, interrumpe el proceso, despídete cordialmente e indica que un operador se comunicará de inmediato.",
+          "maxIterations": 5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1456,
+        -416
+      ],
+      "id": "8cc30db3-4c18-45fb-aefa-29397c1e805f",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Utiliza esta herramienta EXCLUSIVAMENTE para obtener el precio de los vuelos. En esta hoja encontraras tres columnas:  Origen, Desino y Precio en dólares americanos. ",
+        "documentId": {
+          "__rl": true,
+          "value": "1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A",
+          "mode": "list",
+          "cachedResultName": "DESTINOS_Y_PRECIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "DESTINOS_Y_PRECIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -1264,
+        -80
+      ],
+      "id": "01c129c1-982a-44bf-8a17-aaeb5933e80a",
+      "name": "DESTINOS_Y_PRECIOS",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kXRXuRVll1Hrpm7X",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Utiliza esta herramienta EXCLUSIVAMENTE cuando hayas recopilado con éxito todos los datos obligatorios del cliente: nombre completo, correo electrónico, destino deseado, fechas del viaje, cantidad de pasajeros y presupuesto estimado. Esta herramienta registra la solicitud de cotización en el CRM de la agencia de viajes. No actives esta herramienta si el usuario se niega a dar sus datos de contacto, si la información del viaje está incompleta, o si el usuario únicamente hace una consulta general sobre requisitos de visa o pasaporte.",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1pyQOCZ3-3STdQq4osppHkAVoA6nWyrtVG3_cJSdMsxw",
+          "mode": "list",
+          "cachedResultName": "Agencia_de_Viajes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pyQOCZ3-3STdQq4osppHkAVoA6nWyrtVG3_cJSdMsxw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pyQOCZ3-3STdQq4osppHkAVoA6nWyrtVG3_cJSdMsxw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fecha contacto",
+              "displayName": "Fecha contacto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Correo",
+              "displayName": "Correo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Destino",
+              "displayName": "Destino",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fecha viaje",
+              "displayName": "Fecha viaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pasajeros",
+              "displayName": "Pasajeros",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Presupuesto",
+              "displayName": "Presupuesto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -1056,
+        -80
+      ],
+      "id": "26707b4f-8ee3-4533-9b56-aa110db7a33d",
+      "name": "LEADS",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kXRXuRVll1Hrpm7X",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -1472,
+        -64
+      ],
+      "id": "f2993877-4363-4694-96a1-01ae6a1fe3a9",
+      "name": "MEMORIA_DE_CONTEXTO"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BNM2N658F",
+          "mode": "list",
+          "cachedResultName": "todo-leads"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        -1056,
+        -416
+      ],
+      "id": "b904217c-baa3-456e-a737-1e15a29e844a",
+      "name": "ENVIA_MENSAJE_SLACK",
+      "webhookId": "9f36a930-53a9-4077-9264-53d1aedb5447",
+      "credentials": {
+        "slackApi": {
+          "id": "hPGRINI5ZyuAzADB",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {
+          "maxOutputTokens": 1400,
+          "safetySettings": {
+            "values": [
+              {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -1680,
+        -96
+      ],
+      "id": "2b76ded4-759a-42af-aac5-45f902649fa9",
+      "name": "Gemini_con_Guardrails",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eziK2q4V3HlXQEn1",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "ENVIA_MENSAJE_SLACK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DESTINOS_Y_PRECIOS": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LEADS": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEMORIA_DE_CONTEXTO": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini_con_Guardrails": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1229e196-566a-4bd7-8f92-6fb5ff86e8f8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0219638d0654bd80deed5643ce2fbad3b37709f980837c64c229057e9d690a61"
+  },
+  "id": "4WF2CV6r9PrC49Kt",
+  "tags": []
+}
