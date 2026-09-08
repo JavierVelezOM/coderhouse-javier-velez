@@ -30,7 +30,7 @@ Los archivos de este repositorio se encuentran en formato **`.JSON`**. Cada uno 
 Una estructura de ejemplo de los archivos que encontrarás aquí:
 
 ```text
-📁 Nombre-del-Repositorio/
+📁 Nombre de la Entrega o Checkpoint/
 │
 ├── 📄 checkpoint1_Nombre.json   # Primera entrega del curso
 ├── 📄 checkpoint2_Nombre.json   # Segunda entrega del curso
