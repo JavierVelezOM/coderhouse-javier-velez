@@ -1,0 +1,481 @@
+{
+  "name": "AI Automation Avanzado",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -2096,
+        -544
+      ],
+      "id": "9845567b-11e5-4374-823d-8632e51395ca",
+      "name": "Chat trigger",
+      "webhookId": "b5fa25bd-4444-417d-bcac-57a318c163a6"
+    },
+    {
+      "parameters": {
+        "content": "## Entrada\n**Captura** la solicitud del cliente.",
+        "height": 272,
+        "width": 224,
+        "color": "#6AA49A"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2144,
+        -672
+      ],
+      "id": "4d4bbe9a-bf4a-4d49-9467-bf9c9f7fa4d0",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Cerebro \nClasifica la solicitud del usuario ya sea para solicitar **información de destinos o cotización**.",
+        "height": 272,
+        "width": 368,
+        "color": "#FEC28B"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1872,
+        -672
+      ],
+      "id": "230bf859-ea04-4bbe-994a-6527edf5cf0d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Agente clasificador\nProcesamiento de lenguaje natural de la solicitud del usuario.",
+        "height": 256,
+        "width": 256,
+        "color": "#A49BE9"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1952,
+        -288
+      ],
+      "id": "2401639e-07b1-42bc-a153-41a876365081",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "##Rol\nEres el Orquestador Principal (Manager) de una agencia de viajes premium llamada:  Laguna Viajes.\n\n##Ámbito\nTu área de acción se limita exclusivamente a interactuar con visitantes del sitio web, perfilar su viaje ideal haciendo preguntas estratégicas.\n\n##Objetivo\nTu único trabajo es leer e identificar la solicitud del cliente y clasificarla en cada una de éstas 3 categorías estrictas. No debes intentar responder la pregunta, solo clasificarla.\n\n##CATEGORÍAS:\n1. Si el cliente desea información sobre los destinos que manejamos, disponibilidad de vuelos, información sobre un tour  específico, responde EXACTA Y ÚNICAMENTE con la palabra: DESTINO \n\n2. Si el cliente desea saber algún precio, responde EXACTA y UNICAMENTE con la palabra:  COTIZACION\n\n3. Si el cliente desea habla de algún otro tema, responde EXACTA Y ÚNICAMENTE con la palabra: OTROS",
+          "maxIterations": 5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1808,
+        -544
+      ],
+      "id": "8cc30db3-4c18-45fb-aefa-29397c1e805f",
+      "name": "Agente Clasificador",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {
+          "maxOutputTokens": 1400,
+          "safetySettings": {
+            "values": [
+              {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -1888,
+        -144
+      ],
+      "id": "2b76ded4-759a-42af-aac5-45f902649fa9",
+      "name": "Modelo de IA",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eziK2q4V3HlXQEn1",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"output\": \"string\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1584,
+        -160
+      ],
+      "id": "fae79ef8-0431-4f4c-970d-5f8684e232c0",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "content": "## Salida estructurada\nSe asegura de obtener una salida consistente: DESTINO, COTIZACIÓN, OTROS",
+        "height": 256,
+        "width": 288,
+        "color": "#C7758A"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1680,
+        -288
+      ],
+      "id": "807cbecb-645d-4882-9479-78a132e08578",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Enrutamiento determinista\n**Coste: 0 tokens**\nEvalúa la salida estructurada de la IA hasta la vía de escape adecuada.",
+        "height": 352,
+        "width": 336,
+        "color": "#BE8E4B"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1152,
+        -672
+      ],
+      "id": "fd868f7d-1dca-48ce-8a14-4d49defbfa13",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Agente Clasificador').item.json.output }}",
+                    "rightValue": "DESTINO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c86c630e-4350-48a0-b23c-5378f44e0321"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7bf3e4e8-5348-47ea-a718-e812d58d59c1",
+                    "leftValue": "={{ $('Agente Clasificador').item.json.output }}",
+                    "rightValue": "COTIZACION",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "30ed68d6-6045-46dd-9e78-851a9a6994e5",
+                    "leftValue": "={{ $('Agente Clasificador').item.json.output }}",
+                    "rightValue": "OTROS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1040,
+        -512
+      ],
+      "id": "9efa58a4-5ecb-476a-94c5-c84ef1b34f95",
+      "name": "Enrutador"
+    },
+    {
+      "parameters": {
+        "content": "## Mitigación \"Pasillo de la muerte\" \nLimpia metadatos y payloads para enviar solamente lo necesario a los workers",
+        "height": 352,
+        "width": 304,
+        "color": "#6CC693"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -672
+      ],
+      "id": "5617ff64-7127-43bf-bf37-d7ed78fb5ec1",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "11ec6840-65ec-421a-ba4a-79899dc1a200",
+              "name": "id_sesion",
+              "value": "={{ $('Chat trigger').item.json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "c8de8256-c50d-415d-916f-3fce8df01ead",
+              "name": "pregunta",
+              "value": "={{ $('Chat trigger').item.json.chatInput }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1360,
+        -496
+      ],
+      "id": "fd3a821f-ec89-40f9-8420-f7d03420fe8d",
+      "name": "Mitigacion"
+    },
+    {
+      "parameters": {
+        "content": "## Handoff - Sub-workflow especialista DESTINO\nOpción \"Wait for child to finish\" activada.",
+        "height": 368,
+        "width": 336,
+        "color": "#6B9DBD"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        -976
+      ],
+      "id": "1312cd72-0f72-4184-85fd-436ed1634b75",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "7B5qvfoVW2SXx8Y3",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/7B5qvfoVW2SXx8Y3",
+          "cachedResultName": "velez-sub1-ent2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -656,
+        -800
+      ],
+      "id": "1a018f6f-c876-4ea8-8d18-b13160d8d81c",
+      "name": "SUB DESTINOS"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "8TeriHwQ0Wtadrx4",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/8TeriHwQ0Wtadrx4",
+          "cachedResultName": "velez-sub2-ent2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -656,
+        -432
+      ],
+      "id": "732e55f2-e921-4ea7-a472-19ed357dd7c5",
+      "name": "Execute Workflow"
+    },
+    {
+      "parameters": {
+        "content": "## Handoff - Sub-workflow especialista COTIZACION\nOpción \"Wait for child to finish\" activada.",
+        "height": 368,
+        "width": 336
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        -576
+      ],
+      "id": "d3bbb4ef-724f-47cc-bcc1-8f568e5dbffd",
+      "name": "Sticky Note7"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat trigger": {
+      "main": [
+        [
+          {
+            "node": "Agente Clasificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Clasificador": {
+      "main": [
+        [
+          {
+            "node": "Mitigacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo de IA": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Clasificador",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Agente Clasificador",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mitigacion": {
+      "main": [
+        [
+          {
+            "node": "Enrutador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutador": {
+      "main": [
+        [
+          {
+            "node": "SUB DESTINOS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "45339518-040a-4988-826e-2abf71d8d994",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0219638d0654bd80deed5643ce2fbad3b37709f980837c64c229057e9d690a61"
+  },
+  "id": "4WF2CV6r9PrC49Kt",
+  "tags": []
+}

@@ -1,0 +1,269 @@
+{
+  "name": "velez-sub1-ent2",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{ \n\"id_sesion\": \n\"c3447a844c304135aad3b82cc20b7742\", \n\"pregunta\": \n\"Hola, me podrías dar información sobre los destinos que manejass?\\n\\n\"\n}"
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -16,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Punto de entrada\nObtiene las llamadas desde el worflow principal del nodo mitigacion con un JSON de ejemplo preestablecido.",
+        "height": 336,
+        "width": 304,
+        "color": "#745BA4"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        144
+      ],
+      "id": "56fcac77-2228-4ee1-8498-8d0b6711db06",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Acción técnica atómica\n**Busca información en la hoja de destinos\n** Máx. 5 iterations",
+        "height": 336,
+        "width": 528,
+        "color": "#3E6543"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        224,
+        144
+      ],
+      "id": "d20759a5-4704-4412-92ea-c4137a61ecf3",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Modelo IA\nGuardrails and safety settings: block dangerous content.",
+        "height": 288,
+        "width": 272,
+        "color": "#579094"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        208,
+        544
+      ],
+      "id": "f93bbd07-73f8-418b-ab45-c1fa09b68f27",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=##Rol\nEres el Asistente de Cotización Inicial de primer nivel para una agencia de viajes premium.\n\n##Ámbito\nTu área de acción se limita exclusivamente a interactuar con visitantes del sitio web, perfilar su viaje ideal haciendo preguntas estratégicas y registrar la solicitud en el sistema cuando esté completa.\n\n##Objetivo\nDebes buscar información del destino que solicita el cliente solamente en la hoja llamada DESTINOS_Y_PRECIOS que se encuentra en el tool de éste nodo y le informarás al cliente desde donde tienes salidas. \n \n##Reglas y Escalamiento\n1. La pregunta es la siguiente: {{ $json.pregunta }}\n2.  Solo debes consultar y cotizar los destinos que se encuentran en el tool DESTINOS_Y_PRECIOS, si un destino no se encuentra respondes que en este momento el destino no se encuentra disponible.  No inventes destinos.\n3.  En el sheet DESTINOS_Y_PRECIOS encontrarás dos columnas: ORIGEN (que es desde donde tenemos salidas) y DESTINO (que es hacia donde viajamos).\n4. Mantén un tono formal, profesional, servicial y directo.\n5. No prometas disponibilidad exacta de vuelos u hoteles.\n6. Bajo ninguna circunstancia debes emitir opiniones sobre temas políticos, de salud o asuntos ajenos a la planificación de viajes.\n7. Si el visitante solicita hablar con un asesor humano, se muestra frustrado o tiene una emergencia durante un viaje en curso, interrumpe el proceso, despídete cordialmente 8. indica que un operador se comunicará de inmediato.",
+        "options": {
+          "systemMessage": "",
+          "maxIterations": 5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        416,
+        288
+      ],
+      "id": "b98b1e41-a597-4d78-a7e7-f91bd6db6cc5",
+      "name": "AI Agent - Busca destinos"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "DESTINOS_Y_PRECIOS -  Listado de destinos hacia donde damos servicios.\nUtiliza éste tool para saber si damos servicio a un destino.",
+        "documentId": {
+          "__rl": true,
+          "value": "1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A",
+          "mode": "list",
+          "cachedResultName": "DESTINOS_Y_PRECIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "DESTINOS_Y_PRECIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        640,
+        672
+      ],
+      "id": "2004d44f-cd38-4db5-9498-6cde2b4d5103",
+      "name": "DESTINOS_Y_PRECIOS",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kXRXuRVll1Hrpm7X",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## SHEET DESTINOS\nBase de datos (hoja) de destinos hacia donde la agencia de viajes da servicio.",
+        "height": 288,
+        "width": 320,
+        "color": "#A2995D"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        512,
+        544
+      ],
+      "id": "578e0b1a-527d-4c54-ae00-5c23d67fdd4c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ce7a357d-b84e-4e86-8002-407a17b8a9d6",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "574ad96c-1d07-4726-8385-ee8c37b385dc",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        288
+      ],
+      "id": "58494514-3c0a-4f17-a625-7760906f1f1a",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "## Garantía de interfaz\n**Contrato de datos** Retorna un objeto limpio: {\"status\": \"success\",  \"response\": ....} al workflow principal",
+        "height": 336,
+        "width": 384,
+        "color": "#4D779D"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        784,
+        144
+      ],
+      "id": "641491c2-0e94-4b6c-8b5f-e905a3c68a35",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "options": {
+          "safetySettings": {
+            "values": [
+              {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        304,
+        688
+      ],
+      "id": "04f1f2e0-e9d4-4a23-9545-ba443480c71f",
+      "name": "Agente IA",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eziK2q4V3HlXQEn1",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Busca destinos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DESTINOS_Y_PRECIOS": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Busca destinos",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Busca destinos": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente IA": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Busca destinos",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e7587934-c058-4ddc-b976-580f106f3b2b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0219638d0654bd80deed5643ce2fbad3b37709f980837c64c229057e9d690a61"
+  },
+  "id": "7B5qvfoVW2SXx8Y3",
+  "tags": []
+}
