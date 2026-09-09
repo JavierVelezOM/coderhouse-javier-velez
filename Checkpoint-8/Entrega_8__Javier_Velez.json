@@ -1,0 +1,932 @@
+{
+  "name": "Entrega_8__Javier_Velez",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appsnt3tZmF7xqpbQ",
+          "mode": "list",
+          "cachedResultName": "Agencia",
+          "cachedResultUrl": "https://airtable.com/appsnt3tZmF7xqpbQ"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblgfIzXGpJWIkqXz",
+          "mode": "list",
+          "cachedResultName": "SSID",
+          "cachedResultUrl": "https://airtable.com/appsnt3tZmF7xqpbQ/tblgfIzXGpJWIkqXz"
+        },
+        "filterByFormula": "={{ \"SEARCH('\" & $json.chatInput & \"', {SSID})\" }}",
+        "options": {}
+      },
+      "id": "f1590e59-63c7-4233-87c0-d8dfcef58ab4",
+      "name": "Airtable - Recuperar Contexto",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        -1392,
+        656
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENnjA9oIsJvYw2wf",
+          "name": "Airtable - Javier"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Query del usuario: {{ $('When chat message received').item.json.chatInput }}\n\nContexto recuperado de Airtable:\n{{ $json.RESUMEN_CONSOLIDADO }} \nDatos clave de Airtable:\n{{ $json.DATOS_CLAVE }}\n\nInstrucciones: Responde la consulta del usuario usando EXCLUSIVAMENTE el contexto anterior. Si el contexto no contiene la respuesta, dilo explícitamente. No inventes datos.",
+        "options": {
+          "systemMessage": "Eres el agente principal de atención al cliente. Debes responder con precisión factual basada solo en el contexto de Airtable proporcionado."
+        }
+      },
+      "id": "46647710-81ff-4bda-88cf-10292c4aea28",
+      "name": "Agente Principal - Genera Respuesta",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -1104,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "query_original",
+              "type": "string",
+              "value": "={{ $('When chat message received').item.json.chatInput }}"
+            },
+            {
+              "id": "a2",
+              "name": "contexto_airtable",
+              "type": "string",
+              "value": "={{ JSON.stringify($('Airtable - Recuperar Contexto').all().map(i => i.json)) }}"
+            },
+            {
+              "id": "a3",
+              "name": "respuesta_agente",
+              "type": "string",
+              "value": "={{ $json.output }}"
+            },
+            {
+              "id": "a4",
+              "name": "intentos_correccion",
+              "type": "number",
+              "value": "={{ ($json.intentos_correccion || 0) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "790ad302-42fb-44f2-89eb-c80ec617fe58",
+      "name": "Set - Payload para el Juez",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -704,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Evalúa el siguiente objeto JSON de entrada y devuelve tu veredicto según el esquema forzado.\n\nINPUT:\n{{ JSON.stringify({\n  query_original: $json.query_original,\n  contexto_airtable: $json.contexto_airtable,\n  respuesta_agente: $json.respuesta_agente\n}, null, 2) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Eres un Juez de Calidad (QA) imparcial y estricto para un sistema de agentes de IA. Tu única función es EVALUAR la respuesta propuesta por el agente principal comparándola contra el contexto recuperado de Airtable y la query original del usuario. No debes responder la query, no debes conversar, no debes agregar texto fuera del JSON. Debes devolver EXCLUSIVAMENTE un objeto JSON válido que cumpla el siguiente esquema, sin texto adicional, sin markdown, sin backticks.\n\nCriterios de evaluación (rúbrica del Juez):\n1. exactitud_factual (entero 1-5): mide si la respuesta del agente es coherente y verificable contra el contexto de Airtable.\n   5 = Toda la información de la respuesta está respaldada explícitamente por el contexto, sin errores ni alucinaciones.\n   4 = La respuesta es correcta en su totalidad, con matices menores de redacción que no afectan el sentido.\n   3 = La respuesta es parcialmente correcta: mezcla datos del contexto con inferencias razonables no verificables.\n   2 = La respuesta contiene al menos un error factual relevante o una alucinación menor.\n   1 = La respuesta contradice el contexto, inventa datos críticos o no responde la query.\n2. categoria_error (string): clasifica el tipo de error dominante. Usa una de: 'ninguno', 'alucinacion_dato', 'contexto_insuficiente', 'desvio_tema', 'formato_incorrecto', 'informacion_incompleta'.\n3. justificacion (string): explica en máximo 2 frases por qué asignaste esa nota, citando qué parte del contexto respalda o contradice la respuesta.\n4. estado_veredicto (string): decide la ruta según esta regla EXACTA:\n   - 'ACEPTADO' si exactitud_factual >= 4\n   - 'CORREGIR' si exactitud_factual == 3 o == 2 (error recuperable con más contexto o precisión)\n   - 'RECHAZADO' si exactitud_factual == 1 (riesgo alto, requiere revisión humana)\n5. critica_para_reintento (string): si estado_veredicto es 'CORREGIR', escribe instrucciones concretas y accionables para que el agente principal corrija su respuesta en el siguiente intento (qué dato falta, qué corregir, qué parte del contexto usar). Si no aplica, devuelve cadena vacía."
+        }
+      },
+      "id": "db44af2d-fb02-40ad-bcda-a00a864ae901",
+      "name": "Juez LLM - Evaluación QA",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -544,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"exactitud_factual\": {\n      \"type\": \"integer\",\n      \"minimum\": 1,\n      \"maximum\": 5,\n      \"description\": \"Calificación de exactitud factual de 1 (peor) a 5 (mejor)\"\n    },\n    \"categoria_error\": {\n      \"type\": \"string\",\n      \"enum\": [\"ninguno\", \"alucinacion_dato\", \"contexto_insuficiente\", \"desvio_tema\", \"formato_incorrecto\", \"informacion_incompleta\"]\n    },\n    \"justificacion\": {\n      \"type\": \"string\",\n      \"description\": \"Explicación breve (máx 2 frases) del veredicto\"\n    },\n    \"estado_veredicto\": {\n      \"type\": \"string\",\n      \"enum\": [\"ACEPTADO\", \"CORREGIR\", \"RECHAZADO\"]\n    },\n    \"critica_para_reintento\": {\n      \"type\": \"string\",\n      \"description\": \"Instrucciones para el agente si el estado es CORREGIR; vacío en otro caso\"\n    }\n  },\n  \"required\": [\"exactitud_factual\", \"categoria_error\", \"justificacion\", \"estado_veredicto\", \"critica_para_reintento\"],\n  \"additionalProperties\": false\n}"
+      },
+      "id": "e424de05-e194-4103-9e97-3e7c6f7e1143",
+      "name": "Structured Output Parser - Esquema Juez",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "query_original",
+              "type": "string",
+              "value": "={{ $('When chat message received').item.json.chatInput }}"
+            },
+            {
+              "id": "b2",
+              "name": "contexto_airtable",
+              "type": "string",
+              "value": "={{ $('Airtable - Recuperar Contexto').item.json.RESUMEN_CONSOLIDADO }}"
+            },
+            {
+              "id": "b3",
+              "name": "respuesta_agente",
+              "type": "string",
+              "value": "={{ $('Agente Principal - Genera Respuesta').item.json.output }}"
+            },
+            {
+              "id": "b4",
+              "name": "exactitud_factual",
+              "type": "number",
+              "value": "={{ $json.output.exactitud_factual }}"
+            },
+            {
+              "id": "b5",
+              "name": "categoria_error",
+              "type": "string",
+              "value": "={{ $json.output.categoria_error }}"
+            },
+            {
+              "id": "b6",
+              "name": "justificacion",
+              "type": "string",
+              "value": "={{ $json.output.justificacion }}"
+            },
+            {
+              "id": "b7",
+              "name": "estado_veredicto",
+              "type": "string",
+              "value": "={{ $json.output.estado_veredicto }}"
+            },
+            {
+              "id": "b8",
+              "name": "critica_para_reintento",
+              "type": "string",
+              "value": "={{ $json.output.critica_para_reintento }}"
+            },
+            {
+              "id": "b9",
+              "name": "intentos_correccion",
+              "type": "number",
+              "value": "={{ ($json.intentos_correccion || 0) }}"
+            },
+            {
+              "id": "b10",
+              "name": "timestamp_auditoria",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f99ae37b-32ff-4ad9-839f-1561e4599780",
+      "name": "Set - Item de Auditoria",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appsnt3tZmF7xqpbQ",
+          "mode": "list",
+          "cachedResultName": "Agencia",
+          "cachedResultUrl": "https://airtable.com/appsnt3tZmF7xqpbQ"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblgfIzXGpJWIkqXz",
+          "mode": "list",
+          "cachedResultName": "SSID",
+          "cachedResultUrl": "https://airtable.com/appsnt3tZmF7xqpbQ/tblgfIzXGpJWIkqXz"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "SSID": "={{ $('When chat message received').item.json.sessionId }}",
+            "FECHA_ACTUALIZACION": "={{ $now }}",
+            "ESTADO_DEL_CASO": "={{ $json.estado_veredicto }}",
+            "RESUMEN_CONSOLIDADO": "={{ $json.contexto_airtable }}",
+            "DATOS_CLAVE": "={{ $json.justificacion }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "SSID",
+              "displayName": "SSID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "FECHA_ACTUALIZACION",
+              "displayName": "FECHA_ACTUALIZACION",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "RESUMEN_CONSOLIDADO",
+              "displayName": "RESUMEN_CONSOLIDADO",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ESTADO_DEL_CASO",
+              "displayName": "ESTADO_DEL_CASO",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "DATOS_CLAVE",
+              "displayName": "DATOS_CLAVE",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "fdbbaadb-e459-4439-a3ac-1b8901fa3700",
+      "name": "Airtable - Log Veredicto Juez (Auditoria)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        48,
+        656
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENnjA9oIsJvYw2wf",
+          "name": "Airtable - Javier"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Set - Item de Auditoria').item.json.estado_veredicto }}",
+                    "rightValue": "ACEPTADO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ACEPTADO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "c2",
+                    "leftValue": "={{ $('Set - Item de Auditoria').item.json.estado_veredicto }}",
+                    "rightValue": "CORREGIR",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CORREGIR"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "c3",
+                    "leftValue": "={{ $('Set - Item de Auditoria').item.json.estado_veredicto }}",
+                    "rightValue": "RECHAZADO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "RECHAZADO"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "d3aab005-d895-429f-bbe8-2af15c898b1a",
+      "name": "Switch - Ruta segun Veredicto",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        304,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "=  jvelez_24@hotmail.com",
+        "subject": "=Respuesta a tu consulta",
+        "message": "={{ $('Agente Principal - Genera Respuesta').item.json.output }}",
+        "options": {}
+      },
+      "id": "6095df42-c920-4c99-bf03-b998d6db68a1",
+      "name": "Gmail - Enviar Respuesta Final",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        944,
+        496
+      ],
+      "webhookId": "d7600a58-3333-4df5-bec4-7ba79c6b0d49",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "oWgEcDkJZfZ4By7G",
+          "name": "Gmail account - Javier"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BNM2N658F",
+          "mode": "list",
+          "cachedResultName": "todo-leads"
+        },
+        "text": "=Solicita aprobación  {{ $('Agente Principal - Genera Respuesta').item.json.output }}",
+        "otherOptions": {}
+      },
+      "id": "632d6f93-838d-446b-a662-470c0d0cb07d",
+      "name": "Slack - Alerta con Botones Aprobar/Editar",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        688,
+        880
+      ],
+      "webhookId": "339b3d97-5a36-4238-b44c-af34c8885a38",
+      "credentials": {
+        "slackApi": {
+          "id": "hPGRINI5ZyuAzADB",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "id": "5dd12235-35e4-4cd8-b16e-7dc95af9d43b",
+      "name": "Wait for Webhook - Pausa hasta Decision Humana",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        880
+      ],
+      "webhookId": "5160725b-279f-44c3-84db-3b663c503ef2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f1",
+              "leftValue": "={{ $json.query.decision }}",
+              "rightValue": "aprobar",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7195d580-ea21-456e-b23d-d12fd457c0f2",
+      "name": "IF - Decision Humana Aprobar o Editar",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "g1",
+              "name": "respuesta_agente",
+              "type": "string",
+              "value": "={{ $('Slack - Alerta con Botones Aprobar/Editar').item.json.message.text }}"
+            },
+            {
+              "id": "g2",
+              "name": "estado_veredicto",
+              "type": "string",
+              "value": "EDITADO_HUMANO"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bc792d74-74a6-45d5-a28d-7ac792d8f679",
+      "name": "Set - Respuesta Editada por Humano",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1312,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1584,
+        656
+      ],
+      "id": "581abeeb-31be-4b40-8009-1b57b50145f0",
+      "name": "When chat message received",
+      "webhookId": "4beff965-c855-40ca-b17f-95025e540f5d"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -1104,
+        896
+      ],
+      "id": "39349a60-9103-4836-a2a6-176e9b87c9ee",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ky2g0NfpW1B3Wtrr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -544,
+        880
+      ],
+      "id": "6c60a411-873e-4c20-a54f-d6e94319db06",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eziK2q4V3HlXQEn1",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { estado_veredicto: $json.estado_veredicto, respuesta_agente: $json.respuesta_agente } }}",
+        "options": {}
+      },
+      "id": "ec195adb-10d3-4c0c-a180-c53e807cb5c8",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1456,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Obtiene la query original del usuario.\nContexto recuperado de AitTable",
+        "height": 368,
+        "width": 432,
+        "color": "#1C404F"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1648,
+        512
+      ],
+      "id": "f019a50a-3f13-4174-bc5a-fa8d0ed9bdd2",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Respuesta proporcionada por el Agente\nEres el agente principal de atención al cliente. Debes responder con precisión factual basada solo en el contexto de Airtable proporcionado.",
+        "height": 528,
+        "width": 400,
+        "color": "#1E2743"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        512
+      ],
+      "id": "fdb3b1e8-0597-47f9-8b17-98adc54c8ccc",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Juez LLM\nJuez de evaluación con JSON Schema que devuelve: {exactitud_factual: '', estado_veredicto: ''}",
+        "height": 624,
+        "width": 528,
+        "color": "#361D44"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        512
+      ],
+      "id": "b8af92f9-3f9d-445f-be27-75cf4a8d01e0",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Log de auditoría en AirTable\nAlmacena la información, veredicto y axactitud_factual",
+        "height": 416,
+        "width": 432,
+        "color": "#273E3F"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        512
+      ],
+      "id": "b76d4983-d2c0-49e7-856b-862caf90f633",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Switch de ESTADO de VEREDICTO \nACEPTADO, CORREGIR y RECHAZADO",
+        "height": 416,
+        "width": 352,
+        "color": "#685E2C"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        512
+      ],
+      "id": "62603dac-e94e-49a7-8269-69c71f392237",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## SI ES ACEPTADO, ENVÍA CORREO DE GMAIL CON LA RESPUESTA DEL AGENTE.\n",
+        "height": 336,
+        "width": 592,
+        "color": "#94421E"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        704,
+        368
+      ],
+      "id": "b237ccfe-9135-42e4-a510-28be1eea8b8e",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## SI ES RECHAZADO O CORRECCIÓN, ENVÍA UN MENSAJE DE SLACK A VENTAS\nEspera por respuesta para saber si contesta con el mensaje original o no.",
+        "height": 336,
+        "width": 848,
+        "color": "#775918"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        624,
+        752
+      ],
+      "id": "5a6ab632-d6ba-491e-9aab-cdca98a408ce",
+      "name": "Sticky Note6"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Airtable - Recuperar Contexto": {
+      "main": [
+        [
+          {
+            "node": "Agente Principal - Genera Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Principal - Genera Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Set - Payload para el Juez",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Payload para el Juez": {
+      "main": [
+        [
+          {
+            "node": "Juez LLM - Evaluación QA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser - Esquema Juez": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Juez LLM - Evaluación QA",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Juez LLM - Evaluación QA": {
+      "main": [
+        [
+          {
+            "node": "Set - Item de Auditoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Item de Auditoria": {
+      "main": [
+        [
+          {
+            "node": "Airtable - Log Veredicto Juez (Auditoria)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable - Log Veredicto Juez (Auditoria)": {
+      "main": [
+        [
+          {
+            "node": "Switch - Ruta segun Veredicto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch - Ruta segun Veredicto": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Enviar Respuesta Final",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack - Alerta con Botones Aprobar/Editar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack - Alerta con Botones Aprobar/Editar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Enviar Respuesta Final": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack - Alerta con Botones Aprobar/Editar": {
+      "main": [
+        [
+          {
+            "node": "Wait for Webhook - Pausa hasta Decision Humana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Webhook - Pausa hasta Decision Humana": {
+      "main": [
+        [
+          {
+            "node": "IF - Decision Humana Aprobar o Editar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Decision Humana Aprobar o Editar": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set - Respuesta Editada por Humano",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Respuesta Editada por Humano": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Airtable - Recuperar Contexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Principal - Genera Respuesta",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Juez LLM - Evaluación QA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0ff00e0b-e54f-4f81-abef-e9d976e9759e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0219638d0654bd80deed5643ce2fbad3b37709f980837c64c229057e9d690a61"
+  },
+  "id": "G1kHlFvU6ns891yr",
+  "tags": []
+}
