@@ -1,0 +1,1095 @@
+{
+  "name": "AI Automation Avanzado",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -2752,
+        -528
+      ],
+      "id": "9845567b-11e5-4374-823d-8632e51395ca",
+      "name": "Chat trigger",
+      "webhookId": "b5fa25bd-4444-417d-bcac-57a318c163a6"
+    },
+    {
+      "parameters": {
+        "content": "## Entrada\n**Captura** la solicitud del cliente.",
+        "height": 288,
+        "width": 224,
+        "color": "#6AA49A"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2800,
+        -656
+      ],
+      "id": "4d4bbe9a-bf4a-4d49-9467-bf9c9f7fa4d0",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Cerebro \nClasifica la solicitud del usuario ya sea para solicitar **información de destinos o cotización**.",
+        "height": 272,
+        "width": 368,
+        "color": "#FEC28B"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1584,
+        -672
+      ],
+      "id": "230bf859-ea04-4bbe-994a-6527edf5cf0d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Agente clasificador\nProcesamiento de lenguaje natural de la solicitud del usuario.",
+        "height": 256,
+        "width": 256,
+        "color": "#A49BE9"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1664,
+        -288
+      ],
+      "id": "2401639e-07b1-42bc-a153-41a876365081",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Chat trigger').item.json.chatInput }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=## ROL E IDENTIDAD\nEres el Orquestador Principal (Manager) de la agencia de viajes premium \"Laguna Viajes\". Tu función es clasificar las solicitudes de los usuarios y sintetizar el estado de la interacción.\n\n## ÁMBITO DE ACTUACIÓN\nTu área de acción se limita exclusivamente a analizar el mensaje entrante del usuario y clasificarlo dentro de las categorías operativas de la agencia, considerando el historial previo recuperado.\n\n---\n\n[INICIO DE CONTEXTO COMPARTIDO]\nDATOS CLAVE HISTÓRICOS: {{ $json.fields.DATOS_CLAVE || 'Sin datos previos' }}\nRESUMEN CONSOLIDADO: {{ $json.fields.RESUMEN_CONSOLIDADO || 'Primer contacto' }}\nESTADO DEL CASO: {{ $json.fields.ESTADO_DEL_CASO || 'Nuevo' }}\nMENSAJE ENTRANTE DEL USUARIO: {{ $('Chat trigger').item.json.chatInput }}\n[FIN DEL CONTEXTO COMPARTIDO]\n\n---\n\n## REGLAS DE CLASIFICACIÓN\nAnaliza la intención de la solicitud y asígnala a UNA de las siguientes categorías estrictas:\n\n1. DESTINO: Solicitudes de información sobre destinos, tours específicos, disponibilidad de vuelos o itinerarios.\n2. COTIZACION: Preguntas explícitas sobre precios, costos, presupuestos o tarifas.\n3. OTROS: Cualquier otro tema, saludo, consulta general o mensaje fuera de los ámbitos anteriores.\n\n---\n\n## REQUISITOS OBLIGATORIOS DE SALIDA (ESTRICTO FORMATO JSON)\nResponde **EXCLUSIVAMENTE** con un objeto JSON válido, sin bloques de markdown adicionales (sin ```json), sin explicaciones previa ni texto posterior. \n\nEstructura requerida:\n\n{\n  \"clasificacion\": \"DESTINO\" | \"COTIZACION\" | \"OTROS\",\n  \"asunto_principal\": \"Breve descripción en una frase sobre la intención actual del cliente\",\n  \"puntos_clave\": [\n    \"Dato relevante 1 extraído de la charla\",\n    \"Dato relevante 2 extraído de la charla\"\n  ],\n  \"accion_requerida\": \"Acción inmediata recomendada para el agente o sistema\",\n  \"estado_del_caso\": \"Nuevo\" | \"En Proceso\" | \"Pendiente Cotización\" | \"Cerrado\"\n}",
+          "maxIterations": 5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1520,
+        -544
+      ],
+      "id": "8cc30db3-4c18-45fb-aefa-29397c1e805f",
+      "name": "Agente Clasificador",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {
+          "maxOutputTokens": 1400,
+          "safetySettings": {
+            "values": [
+              {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -1600,
+        -144
+      ],
+      "id": "2b76ded4-759a-42af-aac5-45f902649fa9",
+      "name": "Modelo de IA",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eziK2q4V3HlXQEn1",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"output\": \"string\"\n    \n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1296,
+        -160
+      ],
+      "id": "fae79ef8-0431-4f4c-970d-5f8684e232c0",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "content": "## Salida estructurada\nSe asegura de obtener una salida consistente: DESTINO, COTIZACIÓN, OTROS",
+        "height": 256,
+        "width": 288,
+        "color": "#C7758A"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1392,
+        -288
+      ],
+      "id": "807cbecb-645d-4882-9479-78a132e08578",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Enrutamiento determinista\n**Coste: 0 tokens**\nEvalúa la salida estructurada de la IA hasta la vía de escape adecuada.",
+        "height": 352,
+        "width": 336,
+        "color": "#BE8E4B"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        -720
+      ],
+      "id": "fd868f7d-1dca-48ce-8a14-4d49defbfa13",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.clasificacion }}",
+                    "rightValue": "DESTINO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c86c630e-4350-48a0-b23c-5378f44e0321"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7bf3e4e8-5348-47ea-a718-e812d58d59c1",
+                    "leftValue": "={{ $('Agente Clasificador').item.json.output.clasificacion }}",
+                    "rightValue": "COTIZACION",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "30ed68d6-6045-46dd-9e78-851a9a6994e5",
+                    "leftValue": "={{ $('Agente Clasificador').item.json.output.clasificacion }}",
+                    "rightValue": "OTROS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -704,
+        -560
+      ],
+      "id": "9efa58a4-5ecb-476a-94c5-c84ef1b34f95",
+      "name": "Enrutador"
+    },
+    {
+      "parameters": {
+        "content": "## Mitigación \"Pasillo de la muerte\" \nLimpia metadatos y payloads para enviar solamente lo necesario a los workers",
+        "height": 352,
+        "width": 304,
+        "color": "#6CC693"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1152,
+        -720
+      ],
+      "id": "5617ff64-7127-43bf-bf37-d7ed78fb5ec1",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "11ec6840-65ec-421a-ba4a-79899dc1a200",
+              "name": "id_sesion",
+              "value": "={{ $('Chat trigger').item.json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "c8de8256-c50d-415d-916f-3fce8df01ead",
+              "name": "pregunta",
+              "value": "={{ $('Chat trigger').item.json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "bd0c3e58-44b5-4efd-8583-7dfeb3434617",
+              "name": "estado_del_caso",
+              "value": "={{ $json.output.estado_del_caso }}",
+              "type": "string"
+            },
+            {
+              "id": "1752377c-16af-4498-872b-15902a97e1e1",
+              "name": "accion_requerida",
+              "value": "={{ $json.output.accion_requerida }}",
+              "type": "string"
+            },
+            {
+              "id": "084dc43b-ca3d-4739-8949-e90b6a6f245a",
+              "name": "clasificacion",
+              "value": "={{ $json.output.clasificacion }}",
+              "type": "string"
+            },
+            {
+              "id": "b438afd8-0381-4f4d-9bb4-2254d98e0d71",
+              "name": "asunto_principal",
+              "value": "={{ $json.output.asunto_principal }}",
+              "type": "string"
+            },
+            {
+              "id": "db1e4b4f-00fe-46ea-a80f-4ea01b508558",
+              "name": "puntos_clave",
+              "value": "={{ $json.output.puntos_clave[0] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1040,
+        -544
+      ],
+      "id": "fd3a821f-ec89-40f9-8420-f7d03420fe8d",
+      "name": "Mitigacion"
+    },
+    {
+      "parameters": {
+        "content": "## Handoff - Sub-workflow especialista DESTINO\nOpción \"Wait for child to finish\" activada.",
+        "height": 368,
+        "width": 336,
+        "color": "#6B9DBD"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        -928
+      ],
+      "id": "1312cd72-0f72-4184-85fd-436ed1634b75",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "7B5qvfoVW2SXx8Y3",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/7B5qvfoVW2SXx8Y3",
+          "cachedResultName": "velez-sub1-ent2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id_sesion": "={{ $json.id_sesion }}",
+            "pregunta": "={{ $json.pregunta }}",
+            "estado_del_caso": "={{ $json.estado_del_caso }}",
+            "accion_requerida": "={{ $json.accion_requerida }}",
+            "clasificacion": "={{ $json.clasificacion }}",
+            "asunto_principal": "={{ $json.asunto_principal }}",
+            "puntos_clave": "={{ $json.puntos_clave }}"
+          },
+          "matchingColumns": [
+            "output"
+          ],
+          "schema": [
+            {
+              "id": "id_sesion",
+              "displayName": "id_sesion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "pregunta",
+              "displayName": "pregunta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "estado_del_caso",
+              "displayName": "estado_del_caso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "accion_requerida",
+              "displayName": "accion_requerida",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "clasificacion",
+              "displayName": "clasificacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "asunto_principal",
+              "displayName": "asunto_principal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "puntos_clave",
+              "displayName": "puntos_clave",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -336,
+        -752
+      ],
+      "id": "1a018f6f-c876-4ea8-8d18-b13160d8d81c",
+      "name": "SUB DESTINOS"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "8TeriHwQ0Wtadrx4",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/8TeriHwQ0Wtadrx4",
+          "cachedResultName": "velez-sub2-ent2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id_sesion",
+              "displayName": "id_sesion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "pregunta",
+              "displayName": "pregunta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -336,
+        -384
+      ],
+      "id": "732e55f2-e921-4ea7-a472-19ed357dd7c5",
+      "name": "Execute Workflow"
+    },
+    {
+      "parameters": {
+        "content": "## Handoff - Sub-workflow especialista COTIZACION\nOpción \"Wait for child to finish\" activada.",
+        "height": 368,
+        "width": 336
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        -528
+      ],
+      "id": "d3bbb4ef-724f-47cc-bcc1-8f568e5dbffd",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "sendTo": "javier.velez@om-salud.com",
+        "subject": "Ha recibido una notificación de la app de viajes",
+        "message": "=<h3>Ha recibido una notificación de la app de viaje.</h3>\n\n<strong>Tipo:</strong><br>\n{{ $json.type }}<br><br>\n\n<strong>Pregunta del cliente:</strong><br>\n{{ $('Mitigacion').item.json.pregunta }}<br><br>\n\n<strong>Respuesta:</strong>\n{{ $json.response }}<br><br>\n\n\n",
+        "options": {
+          "senderName": "Notificaciones"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        -544
+      ],
+      "id": "d402f285-a24a-4725-98d8-993ee8250848",
+      "name": "Send a message",
+      "webhookId": "44d7b81f-9db6-4211-ae13-d171c3751fb0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "oWgEcDkJZfZ4By7G",
+          "name": "Gmail account - Javier"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## AUDITORIA Y TRAZABILIDAD\nRegistra y notifica al Usuario la interacción con el cliente y que camino tomó (que worker fué utilizado)",
+        "height": 384,
+        "width": 336,
+        "color": "#4A3A59"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -736
+      ],
+      "id": "4d0bf21c-b88b-4b7b-88b9-477a46ecc5ac",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "## Memoria persistente \n**Search record por SSID del chat",
+        "height": 288,
+        "width": 288,
+        "color": "#8C6C9D"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2544,
+        -656
+      ],
+      "id": "ca108197-5575-4b29-9a44-68221a270933",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appsnt3tZmF7xqpbQ",
+          "mode": "list",
+          "cachedResultName": "Agencia",
+          "cachedResultUrl": "https://airtable.com/appsnt3tZmF7xqpbQ"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblgfIzXGpJWIkqXz",
+          "mode": "list",
+          "cachedResultName": "SSID",
+          "cachedResultUrl": "https://airtable.com/appsnt3tZmF7xqpbQ/tblgfIzXGpJWIkqXz"
+        },
+        "filterByFormula": "=({SSID}= '{{ $json.sessionId }}')",
+        "returnAll": false,
+        "limit": 1,
+        "options": {
+          "fields": [
+            "SSID",
+            "RESUMEN_CONSOLIDADO",
+            "DATOS_CLAVE",
+            "ESTADO_DEL_CASO"
+          ]
+        },
+        "sort": {
+          "property": []
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -2464,
+        -528
+      ],
+      "id": "208738ff-901c-4a7b-8676-23e8fc7837cb",
+      "name": "AIRTable - Search SSID",
+      "alwaysOutputData": true,
+      "retryOnFail": false,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENnjA9oIsJvYw2wf",
+          "name": "Airtable - Javier"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c5c996ea-711c-45e5-995c-793baa605867",
+              "leftValue": "={{ $json.fields.SSID }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2160,
+        -528
+      ],
+      "id": "0baeeee4-cbd7-4506-9ae1-88918ffba360",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appsnt3tZmF7xqpbQ",
+          "mode": "list",
+          "cachedResultName": "Agencia",
+          "cachedResultUrl": "https://airtable.com/appsnt3tZmF7xqpbQ"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblgfIzXGpJWIkqXz",
+          "mode": "list",
+          "cachedResultName": "SSID",
+          "cachedResultUrl": "https://airtable.com/appsnt3tZmF7xqpbQ/tblgfIzXGpJWIkqXz"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "SSID": "={{ $('Chat trigger').item.json.sessionId }}",
+            "FECHA_ACTUALIZACION": "={{ $now }}",
+            "ESTADO_DEL_CASO": "nuevo"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "SSID",
+              "displayName": "SSID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "FECHA_ACTUALIZACION",
+              "displayName": "FECHA_ACTUALIZACION",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "RESUMEN_CONSOLIDADO",
+              "displayName": "RESUMEN_CONSOLIDADO",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ESTADO_DEL_CASO",
+              "displayName": "ESTADO_DEL_CASO",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "DATOS_CLAVE",
+              "displayName": "DATOS_CLAVE",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -1904,
+        -192
+      ],
+      "id": "cd72c37b-1669-4ade-8d30-896184a58a4f",
+      "name": "Create a record",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENnjA9oIsJvYw2wf",
+          "name": "Airtable - Javier"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Valida si existe SSID\nValida si existe SSID en Airtable",
+        "height": 288,
+        "color": "#7C78B0"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2224,
+        -656
+      ],
+      "id": "d0de0a3a-3698-49a4-9319-6a65f66e5944",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "## Inicializa sesión\nCrea un registro en AirTable si no existe el SSID",
+        "height": 256,
+        "width": 256,
+        "color": "#619E9A"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1984,
+        -288
+      ],
+      "id": "db66eac9-df2a-41cf-94fc-2d4173b36c2c",
+      "name": "Sticky Note11"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appsnt3tZmF7xqpbQ",
+          "mode": "list",
+          "cachedResultName": "Agencia",
+          "cachedResultUrl": "https://airtable.com/appsnt3tZmF7xqpbQ"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblgfIzXGpJWIkqXz",
+          "mode": "list",
+          "cachedResultName": "SSID",
+          "cachedResultUrl": "https://airtable.com/appsnt3tZmF7xqpbQ/tblgfIzXGpJWIkqXz"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "SSID": "={{ $('Mitigacion').item.json.id_sesion }}",
+            "FECHA_ACTUALIZACION": "={{ $now }}",
+            "RESUMEN_CONSOLIDADO": "={{ $('Mitigacion').item.json.accion_requerida }}",
+            "ESTADO_DEL_CASO": "={{ $('Mitigacion').item.json.estado_del_caso }}",
+            "DATOS_CLAVE": "={{ $('Mitigacion').item.json.puntos_clave }}"
+          },
+          "matchingColumns": [
+            "SSID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "SSID",
+              "displayName": "SSID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "FECHA_ACTUALIZACION",
+              "displayName": "FECHA_ACTUALIZACION",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "RESUMEN_CONSOLIDADO",
+              "displayName": "RESUMEN_CONSOLIDADO",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ESTADO_DEL_CASO",
+              "displayName": "ESTADO_DEL_CASO",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "DATOS_CLAVE",
+              "displayName": "DATOS_CLAVE",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        -544
+      ],
+      "id": "802f933d-27c2-4d25-b744-41336e3f3555",
+      "name": "Create or update a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENnjA9oIsJvYw2wf",
+          "name": "Airtable - Javier"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Actualiza memoria largo plazo\nActualiza la memoria a largo plazo con base al SSID",
+        "height": 384,
+        "width": 320,
+        "color": "#62749D"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -736
+      ],
+      "id": "b3b39e9d-540a-4f0c-bdf3-866621971cd6",
+      "name": "Sticky Note12"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat trigger": {
+      "main": [
+        [
+          {
+            "node": "AIRTable - Search SSID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Clasificador": {
+      "main": [
+        [
+          {
+            "node": "Mitigacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo de IA": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Clasificador",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Agente Clasificador",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mitigacion": {
+      "main": [
+        [
+          {
+            "node": "Enrutador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutador": {
+      "main": [
+        [
+          {
+            "node": "SUB DESTINOS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SUB DESTINOS": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AIRTable - Search SSID": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Agente Clasificador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record": {
+      "main": [
+        [
+          {
+            "node": "Agente Clasificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Create or update a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2da27292-1f07-4881-845e-96e64934ec72",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0219638d0654bd80deed5643ce2fbad3b37709f980837c64c229057e9d690a61"
+  },
+  "id": "4WF2CV6r9PrC49Kt",
+  "tags": []
+}
