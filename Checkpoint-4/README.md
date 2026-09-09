@@ -1,4 +1,4 @@
-# 🌍 Sistema de Automatización de Atención al Cliente - Laguna Viajes
+# Integraciones Avanzadas e Interconexión de Sistemas
 > **Curso:** AI Automation Avanzado  
 > **Comisión:** #102005  
 > **Pre-entrega:** 4  
