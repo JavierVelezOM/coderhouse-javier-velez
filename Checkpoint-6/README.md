@@ -103,4 +103,3 @@ El flujo de trabajo automatizado está integrado por los siguientes componentes 
 
 ### 👨‍💻 Autor
 **Javier Vélez**  
-*Ingeniería de Software & Automatización con IA*
