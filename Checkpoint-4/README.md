@@ -110,20 +110,13 @@ Estructura requerida:
 
 ## 🖼️ Evidencias y Diagramas
 
-### Flujo Principal - Primera Mitad
-*Inserte aquí el diagrama o captura del inicio del workflow (Trigger, Memoria, AI Agent)*
-
-### Flujo Principal - Segunda Mitad
-*Inserte aquí el diagrama o captura del cierre del workflow (Enrutamiento, Gmail, Slack)*
-
-### Integración y Notificación en Slack
-*Inserte aquí la captura de pantalla de la evidencia de notificación enviada al canal de ventas de Slack*
+### PDF con descripción y flujo de diagramas
 
 ---
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **Orquestación & Workflows:** n8n / Node-RED / Make (según plataforma elegida)
-- **Modelos de IA:** LLM Orquestador / OpenAI / Anthropic
+- **Orquestación & Workflows:** n8n.
+- **Modelos de IA:** Gemini
 - **Integraciones:** Gmail API (OAuth 2.0), Slack API (OAuth 2.0)
-- **Gestión de Memoria:** Base de datos relacional / Vector Store / Memoria Persistente de Sesión
+- **Gestión de Memoria:** AirTable
