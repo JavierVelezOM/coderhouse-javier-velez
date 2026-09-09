@@ -1,0 +1,378 @@
+{
+  "name": "velez-sub2-ent2",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n\"id_sesion\": \"61c6a5787e304c56a9c202908bdf2243\",\n\"pregunta\":\"me das informacion de los vuelos de mexico?\",\n\"estado_del_caso\": \"Nuevo\",\n\"accion_requerida\": \"Solicitar detalles adicionales (aeropuerto de origen, ciudad de destino en México, fechas de viaje y número de pasajeros) para brindar opciones y horarios de vuelos específicos.\",\n\"clasificacion\": \"DESTINO\",\n\"asunto_principal\": \"Solicitud de información sobre vuelos de México\",\n\"puntos_clave\": \"El usuario solicita información general sobre vuelos relacionados con México.\" \n}"
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -96,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Entrada\nObtiene las llamadas desde el worflow principal del nodo mitigacion con un JSON de ejemplo preestablecido.",
+        "height": 368,
+        "width": 352,
+        "color": "#2E4860"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -112
+      ],
+      "id": "53301af0-9200-4395-96d2-aeefa5325df1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Acción atómica\n**Busca los precios en la hoja de destinos_y_precios\n** Máx. 5 iterations",
+        "height": 368,
+        "width": 448,
+        "color": "#463956"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        176,
+        -112
+      ],
+      "id": "fd165231-adf9-4ca8-bc84-0e17c851a492",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 10000,
+          "safetySettings": {
+            "values": [
+              {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -96,
+        448
+      ],
+      "id": "962ea8c5-1a4b-47d5-bff3-a4f2b5e39bbc",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eziK2q4V3HlXQEn1",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Modelo IA\nGuardrails and safety settings: block dangerous content.",
+        "height": 288,
+        "width": 272,
+        "color": "#37624E"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        304
+      ],
+      "id": "dc9f202b-1c8e-49eb-91fe-d7bb45d0d4a5",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## SHEETS LEADS\nAlmacena la información en una hoja de LEADS una vez que el agente haya obtenido la información necesaria.",
+        "height": 288,
+        "width": 320,
+        "color": "#895C3E"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        448,
+        320
+      ],
+      "id": "d44b148d-7d8d-46de-8bbb-7c76e03908e9",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Cuando tengas la información completa del cliente, guarda su información en ésta hoja LEADS. ",
+        "documentId": {
+          "__rl": true,
+          "value": "1pyQOCZ3-3STdQq4osppHkAVoA6nWyrtVG3_cJSdMsxw",
+          "mode": "list",
+          "cachedResultName": "Agencia_de_Viajes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pyQOCZ3-3STdQq4osppHkAVoA6nWyrtVG3_cJSdMsxw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pyQOCZ3-3STdQq4osppHkAVoA6nWyrtVG3_cJSdMsxw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        448
+      ],
+      "id": "d18da3cf-4d69-4215-b2f4-cc239648fa85",
+      "name": "SHEET LEADS",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kXRXuRVll1Hrpm7X",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## SHEET DESTINOS_Y_PRECIOS\nObtiene la información de los destinos a los que viajamos",
+        "height": 288,
+        "width": 416,
+        "color": "#6B5252"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        800,
+        320
+      ],
+      "id": "966021e0-a858-4658-b662-62f1f82e2ebc",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "EN ESTA HOJA SOLAMENTE OBTIENES LA INFORMACIÓN DE LOS DESTINOS A LOS QUE VIAJAMOS.",
+        "documentId": {
+          "__rl": true,
+          "value": "1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A",
+          "mode": "list",
+          "cachedResultName": "DESTINOS_Y_PRECIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "DESTINOS_Y_PRECIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        976,
+        432
+      ],
+      "id": "afd59ee3-7f20-4277-9018-d0f67173981e",
+      "name": "SHEET - DESTINOS_Y_PRECIOS",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kXRXuRVll1Hrpm7X",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fc9c8891-45ad-4859-b193-e96cef6e16ad",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "9f48665f-1c3e-4e52-838a-71bab91dd2ba",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "0735cbfa-c314-4258-ac50-d96a2ff47361",
+              "name": "type",
+              "value": "cotizacion",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        864,
+        48
+      ],
+      "id": "c7183d98-6a14-479d-8721-fcc6c6007271",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "## Garantía de interfaz\n**Contrato de datos** Retorna un objeto limpio: {\"status\": \"saved\",  \"response\": ....} al workflow principal",
+        "height": 368,
+        "width": 480,
+        "color": "#436563"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        656,
+        -112
+      ],
+      "id": "e294b2de-f46e-4438-8963-239c213e9b0f",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=##Rol\nEres el Asistente de Cotización Inicial de primer nivel para una agencia de viajes premium.\n\n##Ámbito\nTu área de acción se limita exclusivamente a interactuar con visitantes del sitio web, perfilar su viaje ideal haciendo preguntas estratégicas y registrar la solicitud en el sistema cuando esté completa.\n\n##Objetivo\nDebes saludar al visitante, identificar su nombre, correo electrónico, destino, las fechas aproximadas del viaje y la cantidad de pasajeros. Una vez recopilada esta información, debes invocar la herramienta LEADS.\n \n##Reglas y Escalamiento\n1. La consulta del cliente es la siguiente:\n   - Pregunta: {{ $json.pregunta }}\n   - Estado del caso: {{ $json.estado_del_caso }}\n   - Asunto principal:  {{ $json.asunto_principal }}\n   - Puntos clave:  {{ $json.puntos_clave }}\n2. Solo debes consultar y cotizar los destinos que se encuentran en el tool DESTINOS_Y_PRECIOS, si un destino no se encuentra respondes que en este momento el destino no se encuentra disponible.  No inventes destinos.\n3.  En el sheet DESTINOS_Y_PRECIOS encontrarás dos columnas: ORIGEN (que es desde donde tenemos salidas) y DESTINO (que es hacia donde viajamos).\n4. Mantén un tono formal, profesional, servicial y directo.\n5. No prometas disponibilidad exacta de vuelos u hoteles.\n6. Bajo ninguna circunstancia debes emitir opiniones sobre temas políticos, de salud o asuntos ajenos a la planificación de viajes.\n7. Si el visitante solicita hablar con un asesor humano, se muestra frustrado o tiene una emergencia durante un viaje en curso, interrumpe el proceso, despídete cordialmente 8. indica que un operador se comunicará de inmediato.",
+        "options": {
+          "maxIterations": 5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        288,
+        48
+      ],
+      "id": "bedbcc61-bd33-42bd-9218-b476033fed90",
+      "name": "AI Agent - Save Leads"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.id_sesion }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        224,
+        464
+      ],
+      "id": "5a2a8f11-4fa8-4f10-9950-4e348d58e7a2",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "content": "## Memoria simple para mantener el chat.\nObtiene el Session ID de la memoria persistente",
+        "height": 272,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        112,
+        320
+      ],
+      "id": "a6926af2-92e9-46eb-b35f-09783a9faf52",
+      "name": "Sticky Note6"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Save Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Save Leads",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SHEET LEADS": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Save Leads",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SHEET - DESTINOS_Y_PRECIOS": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Save Leads",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Save Leads": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent - Save Leads",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "eda12a23-2309-4e94-8604-b0252f512060",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0219638d0654bd80deed5643ce2fbad3b37709f980837c64c229057e9d690a61"
+  },
+  "id": "8TeriHwQ0Wtadrx4",
+  "tags": []
+}

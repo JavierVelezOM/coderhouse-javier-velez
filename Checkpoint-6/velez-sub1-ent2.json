@@ -1,0 +1,562 @@
+{
+  "name": "velez-sub1-ent2",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n\"id_sesion\": \"61c6a5787e304c56a9c202908bdf2243\",\n\"pregunta\":\"me das informacion de los vuelos de mexico?\",\n\"estado_del_caso\": \"Nuevo\",\n\"accion_requerida\": \"Solicitar detalles adicionales (aeropuerto de origen, ciudad de destino en México, fechas de viaje y número de pasajeros) para brindar opciones y horarios de vuelos específicos.\",\n\"clasificacion\": \"DESTINO\",\n\"asunto_principal\": \"Solicitud de información sobre vuelos de México\",\n\"puntos_clave\": \"El usuario solicita información general sobre vuelos relacionados con México.\" \n}"
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        48,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Punto de entrada\nObtiene las llamadas desde el worflow principal del nodo mitigacion con un JSON de ejemplo preestablecido.",
+        "height": 336,
+        "width": 276,
+        "color": "#745BA4"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        144
+      ],
+      "id": "56fcac77-2228-4ee1-8498-8d0b6711db06",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Acción técnica atómica\n**Busca información en la hoja de destinos\n** Máx. 5 iterations",
+        "height": 336,
+        "width": 468,
+        "color": "#3E6543"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        256,
+        144
+      ],
+      "id": "d20759a5-4704-4412-92ea-c4137a61ecf3",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Modelo IA\nGuardrails and safety settings: block dangerous content.",
+        "height": 288,
+        "width": 272,
+        "color": "#579094"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        624
+      ],
+      "id": "f93bbd07-73f8-418b-ab45-c1fa09b68f27",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Rol\nEres el Asistente de Cotización Inicial de primer nivel para una agencia de viajes premium.\n\nÁmbito\nTu área de acción se limita exclusivamente a interactuar con visitantes del sitio web, perfilar su viaje ideal haciendo preguntas estratégicas, resolver dudas sobre políticas y servicios de la agencia, y registrar la solicitud en el sistema cuando esté completa.\n\nObjetivo\nDebes buscar información del destino que solicita el cliente solamente en la hoja llamada DESTINOS_Y_PRECIOS que se encuentra en el tool de este nodo y le informarás al cliente desde dónde tienes salidas. Para cualquier consulta sobre políticas, condiciones, medios de pago, cancelaciones, equipaje u otras reglas de servicio, debes usar exclusivamente la herramienta documental buscar_politicas_laguna_viajes.\n\nReglas y Escalamiento\nLos datos son los siguientes:\n\nID de Sesión: {{ $json.id_sesion }}\n\nPregunta: {{ $json.pregunta }}\n\nEstado del caso: {{ $json.estado_del_caso }}\n\nAsunto principal: {{ $json.asunto_principal }}\n\nPuntos clave: {{ $json.puntos_clave }}\n\nSolo debes consultar y cotizar los destinos que se encuentran en el tool DESTINOS_Y_PRECIOS, si un destino no se encuentra respondes que en este momento el destino no se encuentra disponible. No inventes destinos.\n\nEn el sheet DESTINOS_Y_PRECIOS encontrarás dos columnas: ORIGEN (que es desde donde tenemos salidas) y DESTINO (que es hacia donde viajamos).\n\nMantén un tono formal, profesional, servicial y directo.\n\nNo prometas disponibilidad exacta de vuelos u hoteles.\n\nBajo ninguna circunstancia debes emitir opiniones sobre temas políticos, de salud o asuntos ajenos a la planificación de viajes.\n\nSi el visitante solicita hablar con un asesor humano, se muestra frustrado o tiene una emergencia durante un viaje en curso, interrumpe el proceso, despídete cordialmente e indica que un operador se comunicará de inmediato.\n\nBase de Conocimiento Documental (RAG) — Políticas y Servicios\nPara toda pregunta sobre políticas de pago, cancelaciones, reembolsos, reprogramaciones, equipaje, mascotas en excursiones o preguntas frecuentes operativas, debes invocar obligatoriamente la herramienta buscar_politicas_laguna_viajes antes de responder. No respondas de memoria ni por suposición.\n\nBasa el 100% de tu respuesta únicamente en los fragmentos que te devuelva la herramienta documental. No completes con conocimiento externo, no generalices ni asumas condiciones que no estén explícitas en el fragmento recuperado.\n\nCita textualmente la sección o cláusula del manual de donde proviene el dato, indicando el número de sección entre paréntesis. Ejemplo: \"Recibís el 100% de reembolso si cancelás con más de 30 días de anticipación (Sección 2.1, Cancelaciones por Parte del Pasajero).\"\n\nRegla dorada de contingencia (\"No sé\"): si la herramienta documental no devuelve ningún fragmento relevante para la pregunta, o el score de similitud es bajo, debes responder exactamente: \"No sé: no figura en la documentación disponible.\" No inventes, no infieras y no ofrezcas una respuesta parcial disfrazada de completa.\n\nSi la pregunta del visitante es ambigua y podría relacionarse con dos políticas distintas (por ejemplo, cancelación estándar vs. excepción médica), aclara la duda antes de responder o presenta ambos escenarios citando ambas secciones, en lugar de asumir cuál aplica.",
+        "options": {
+          "systemMessage": "",
+          "maxIterations": 5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        384,
+        288
+      ],
+      "id": "b98b1e41-a597-4d78-a7e7-f91bd6db6cc5",
+      "name": "AI Agent - Busca destinos"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "DESTINOS_Y_PRECIOS -  Listado de destinos hacia donde damos servicios.\nUtiliza éste tool para saber si damos servicio a un destino.",
+        "documentId": {
+          "__rl": true,
+          "value": "1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A",
+          "mode": "list",
+          "cachedResultName": "DESTINOS_Y_PRECIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "DESTINOS_Y_PRECIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        752
+      ],
+      "id": "2004d44f-cd38-4db5-9498-6cde2b4d5103",
+      "name": "DESTINOS_Y_PRECIOS",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kXRXuRVll1Hrpm7X",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## SHEET DESTINOS\nBase de datos (hoja) de destinos hacia donde la agencia de viajes da servicio.",
+        "height": 288,
+        "width": 320,
+        "color": "#A2995D"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        448,
+        624
+      ],
+      "id": "578e0b1a-527d-4c54-ae00-5c23d67fdd4c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ce7a357d-b84e-4e86-8002-407a17b8a9d6",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "574ad96c-1d07-4726-8385-ee8c37b385dc",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "6fa3b553-f6a4-4f5b-8ec1-4e86fea9ee87",
+              "name": "type",
+              "value": "destino",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        288
+      ],
+      "id": "58494514-3c0a-4f17-a625-7760906f1f1a",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "## Garantía de interfaz\n**Contrato de datos** Retorna un objeto limpio: {\"status\": \"success\",  \"response\": ....} al workflow principal",
+        "height": 336,
+        "width": 384,
+        "color": "#4D779D"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        752,
+        144
+      ],
+      "id": "641491c2-0e94-4b6c-8b5f-e905a3c68a35",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "options": {
+          "safetySettings": {
+            "values": [
+              {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_LOW_AND_ABOVE"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -144,
+        768
+      ],
+      "id": "04f1f2e0-e9d4-4a23-9545-ba443480c71f",
+      "name": "Agente IA",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ky2g0NfpW1B3Wtrr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('When Executed by Another Workflow').item.json.id_sesion }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        208,
+        768
+      ],
+      "id": "6c5f2617-ecc9-4fac-9c7f-114802a272c2",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "content": "## Memoria temporal para mantener la conversación.\nObtiene el ID del chat que viene de la memoria persistente",
+        "height": 288,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        96,
+        624
+      ],
+      "id": "ca79ae49-c1e1-416a-8838-c195ca4afe39",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1088,
+        256
+      ],
+      "id": "b020af4d-8171-40d4-86c6-917ddf8051cc",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"job\": {\n    \"user_metadata\": null,\n    \"id\": \"pjb-h9edy5oxxi1iwdpsu3366hiq4sdk\",\n    \"created_at\": \"2026-09-09T06:25:38.506612Z\",\n    \"updated_at\": \"2026-09-09T06:25:47.263931Z\",\n    \"project_id\": \"b08aa349-bcd0-45fc-8715-38770c601c4f\",\n    \"status\": \"COMPLETED\",\n    \"error_message\": null,\n    \"name\": \"Manual_de_Politicas_y_Servicios_LagunaViajes_v3.2_LISTO.md\",\n    \"tier\": \"fast\"\n  },\n  \"result_content_metadata\": null,\n  \"text\": {\n    \"pages\": [\n      {\n        \"page_number\": 1,\n        \"text\": \"MANUAL MAESTRO DE POLÍTICAS, SERVICIOS Y OPERACIONES\\n\\nEmpresa: Laguna Viajes S.A. Versión: 3.2 Ámbito: Documento Institucional y Político de Atención al Cliente\\n\\n1. POLÍTICAS DE RESERVA Y MEDIOS DE PAGO\\n\\n1.1 Medios de Pago Aceptados\\n\\nTarjetas de crédito y débito: Visa, Mastercard y American Express. Se permite el pago en hasta 6 cuotas sin interés con bancos seleccionados en temporada baja.\\nTransferencias bancarias: Aceptadas en pesos argentinos (ARS) y dólares estadounidenses (USD). El comprobante debe enviarse antes de las 18:00 hs para mantener la tarifa congelada.\\nEfectivo en dólares estadounidenses (USD): Únicamente se reciben billetes sin marcas, sin sellos y sin roturas (edición \\\"cara grande\\\" o \\\"cinta azul\\\"). No se aceptan billetes \\\"cara chica\\\" ni deteriorados.\\n\\n1.2 Confirmación de Reservas\\n\\nToda reserva requiere un pago inicial del 30% del valor total del paquete en concepto de seña. El saldo restante debe ser abonado con un mínimo de 15 días de anticipación a la fecha de salida. Si el saldo no es saldado en la fecha límite, la reserva será cancelada automáticamente sin derecho a devolución de la seña.\\n\\n2. POLÍTICAS DE CANCELACIÓN, REPROGRAMACIÓN Y REEMBOLSOS\\n\\n2.1 Cancelaciones por Parte del Pasajero\\n\\nLas solicitudes de cancelación deben presentarse formalmente por escrito. Las devoluciones se aplican según el tiempo de anticipación respecto a la fecha del viaje:\\n\\nTiempo de anticipación a la salida  Porcentaje de reembolso  Penalidad aplicada\\nMás de 30 días de anticipación      100% de lo abonado       Sin penalidad ($0)\\nEntre 15 y 29 días de anticipación  50% de lo abonado        Penalidad del 50%\\nMenos de 15 días de anticipación    0% de lo abonado         Penalidad del 100%\\n\\n2.2 Excepción por Razones Médicas\\n\\nEn caso de enfermedad sobreviniente o fuerza mayor médica que impida viajar, el pasajero podrá obtener un reembolso del 100% únicamente si presenta un certificado médico oficial que acredite la inasistencia con al menos 48 horas de anticipación al inicio del viaje.\\n\\n2.3 Reprogramaciones y Cambios de Fecha\\n\\nPrimera reprogramación: Sin costo adicional si se solicita con más de 20 días de anticipación a la fecha original del paquete.\\nReprogramación fuera de término: Aplica un costo administrativo fijo de $15,000 ARS por pasajero más la diferencia tarifaria si la nueva fecha corresponde a temporada alta.\\n\\n3. ESPECIFICACIONES DE PAQUETES Y TOURS\\n\\n3.1 Servicios Incluidos y Excluidos\\n\\nServicios Incluidos: Todos los paquetes estándar incluyen pasajes ida y vuelta, alojamiento con desayuno, traslados aeropuerto-hotel-aeropuerto y excursiones especificadas explícitamente en el itinerario.\\nServicios Excluidos: Propinas a guías y choferes, bebidas en las comidas no especificadas, asistencia al viajero (salvo que se adicione en la compra) y tasas municipales o turísticas cobradas directamente en el hotel.\\n\\n3.2 Política de Mascotas en Excursiones\\n\\nPor normativas de seguridad operativa y restricciones de las reservas naturales locales, no se admiten mascotas de ningún tipo ni tamaño en excursiones de alta montaña, navegación o trekking náutico. Solo se aceptan perros de asistencia acreditados legalmente con aviso previo de 72 horas.\\n\\n3.3 Equipaje Permitido\\n\\nVuelos Nacionales: Permiten 1 mochila de mano (hasta 6 kg) y 1 equipaje despachado en bodega (hasta 15 kg).\\nExceso de equipaje: El cobro por kilo excedente se realiza directamente en la terminal o aeropuerto según la tarifa vigente de la aerolínea operadora.\\n\\n4. PREGUNTAS FRECUENTES Y OPERATIVA GENERAL (FAQ)\\n\\n4.1 ¿Qué sucede si el tour se suspende por mal tiempo?\\n\\nSi las condiciones climáticas impiden la realización de una excursión programada, Laguna Viajes reprogramará la actividad dentro de los días de permanencia del cliente. Si no fuera posible la reprogramación por falta de tiempo, se emitirá un voucher de crédito equivalente al valor total de esa excursión.\\n\\n4.2 ¿Cómo funciona el beneficio de asistencia al viajero?\\n\\nLa cobertura médica estándar cubre emergencias médicas hasta USD 10,000 por evento. Para activar la atención, el cliente debe comunicarse inmediatamente con la central telefónica de emergencias indicada en su voucher antes de acudir a cualquier centro médico privado.\"\n      }\n    ]\n  },\n  \"markdown\": {\n    \"pages\": [\n      {\n        \"page_number\": 1,\n        \"markdown\": \"# MANUAL MAESTRO DE POLÍTICAS, SERVICIOS Y OPERACIONES\\n\\n**Empresa: Laguna Viajes S.A. Versión: 3.2 Ámbito: Documento Institucional y Político de Atención al Cliente**\\n\\n## 1. POLÍTICAS DE RESERVA Y MEDIOS DE PAGO\\n\\n### 1.1 Medios de Pago Aceptados\\n\\n- Tarjetas de crédito y débito: Visa, Mastercard y American Express. Se permite el pago en hasta 6 cuotas sin interés con bancos seleccionados en temporada baja.\\n- Transferencias bancarias: Aceptadas en pesos argentinos (ARS) y dólares estadounidenses (USD). El comprobante debe enviarse antes de las 18:00 hs para mantener la tarifa congelada.\\n- Efectivo en dólares estadounidenses (USD): Únicamente se reciben billetes sin marcas, sin sellos y sin roturas (edición \\\"cara grande\\\" o \\\"cinta azul\\\"). No se aceptan billetes \\\"cara chica\\\" ni deteriorados.\\n\\n### 1.2 Confirmación de Reservas\\n\\nToda reserva requiere un pago inicial del 30% del valor total del paquete en concepto de seña. El saldo restante debe ser abonado con un mínimo de 15 días de anticipación a la fecha de salida. Si el saldo no es saldado en la fecha límite, la reserva será cancelada automáticamente sin derecho a devolución de la seña.\\n\\n## 2. POLÍTICAS DE CANCELACIÓN, REPROGRAMACIÓN Y REEMBOLSOS\\n\\n### 2.1 Cancelaciones por Parte del Pasajero\\n\\nLas solicitudes de cancelación deben presentarse formalmente por escrito. Las devoluciones se aplican según el tiempo de anticipación respecto a la fecha del viaje:\\n\\n| Tiempo de anticipación a la salida | Porcentaje de reembolso | Penalidad aplicada |\\n|---|---|---|\\n| Más de 30 días de anticipación | 100% de lo abonado | Sin penalidad ($0) |\\n| Entre 15 y 29 días de anticipación | 50% de lo abonado | Penalidad del 50% |\\n| Menos de 15 días de anticipación | 0% de lo abonado | Penalidad del 100% |\\n\\n### 2.2 Excepción por Razones Médicas\\n\\nEn caso de enfermedad sobreviniente o fuerza mayor médica que impida viajar, el pasajero podrá obtener un reembolso del 100% únicamente si presenta un certificado médico oficial que acredite la inasistencia con al menos 48 horas de anticipación al inicio del viaje.\\n\\n### 2.3 Reprogramaciones y Cambios de Fecha\\n\\n- Primera reprogramación: Sin costo adicional si se solicita con más de 20 días de anticipación a la fecha original del paquete.\\n- Reprogramación fuera de término: Aplica un costo administrativo fijo de $15,000 ARS por pasajero más la diferencia tarifaria si la nueva fecha corresponde a temporada alta.\\n\\n## 3. ESPECIFICACIONES DE PAQUETES Y TOURS\\n\\n### 3.1 Servicios Incluidos y Excluidos\\n\\n- Servicios Incluidos: Todos los paquetes estándar incluyen pasajes ida y vuelta, alojamiento con desayuno, traslados aeropuerto-hotel-aeropuerto y excursiones especificadas explícitamente en el itinerario.\\n- Servicios Excluidos: Propinas a guías y choferes, bebidas en las comidas no especificadas, asistencia al viajero (salvo que se adicione en la compra) y tasas municipales o turísticas cobradas directamente en el hotel.\\n\\n### 3.2 Política de Mascotas en Excursiones\\n\\nPor normativas de seguridad operativa y restricciones de las reservas naturales locales, no se admiten mascotas de ningún tipo ni tamaño en excursiones de alta montaña, navegación o trekking náutico. Solo se aceptan perros de asistencia acreditados legalmente con aviso previo de 72 horas.\\n\\n### 3.3 Equipaje Permitido\\n\\n- Vuelos Nacionales: Permiten 1 mochila de mano (hasta 6 kg) y 1 equipaje despachado en bodega (hasta 15 kg).\\n- Exceso de equipaje: El cobro por kilo excedente se realiza directamente en la terminal o aeropuerto según la tarifa vigente de la aerolínea operadora.\\n\\n## 4. PREGUNTAS FRECUENTES Y OPERATIVA GENERAL (FAQ)\\n\\n### 4.1 ¿Qué sucede si el tour se suspende por mal tiempo?\\n\\nSi las condiciones climáticas impiden la realización de una excursión programada, Laguna Viajes reprogramará la actividad dentro de los días de permanencia del cliente. Si no fuera posible la reprogramación por falta de tiempo, se emitirá un voucher de crédito equivalente al valor total de esa excursión.\\n\\n### 4.2 ¿Cómo funciona el beneficio de asistencia al viajero?\\n\\nLa cobertura médica estándar cubre emergencias médicas hasta USD 10,000 por evento. Para activar la atención, el cliente debe comunicarse inmediatamente con la central telefónica de emergencias indicada en su voucher antes de acudir a cualquier centro médico privado.\",\n        \"success\": true\n      }\n    ]\n  },\n  \"items\": {\n    \"pages\": [\n      {\n        \"page_number\": 1,\n        \"items\": [\n          {\n            \"type\": \"heading\",\n            \"md\": \"# MANUAL MAESTRO DE POLÍTICAS, SERVICIOS Y OPERACIONES\",\n            \"level\": 1,\n            \"value\": \"MANUAL MAESTRO DE POLÍTICAS, SERVICIOS Y OPERACIONES\"\n          },\n          {\n            \"type\": \"text\",\n            \"md\": \"**Empresa: Laguna Viajes S.A. Versión: 3.2 Ámbito: Documento Institucional y Político de Atención al Cliente**\",\n            \"value\": \"Empresa: Laguna Viajes S.A. Versión: 3.2 Ámbito: Documento Institucional y Político de Atención al Cliente\"\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"## 1. POLÍTICAS DE RESERVA Y MEDIOS DE PAGO\",\n            \"level\": 2,\n            \"value\": \"1. POLÍTICAS DE RESERVA Y MEDIOS DE PAGO\"\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"### 1.1 Medios de Pago Aceptados\",\n            \"level\": 3,\n            \"value\": \"1.1 Medios de Pago Aceptados\"\n          },\n          {\n            \"type\": \"list\",\n            \"md\": \"* Tarjetas de crédito y débito: Visa, Mastercard y American Express. Se permite el pago en hasta 6 cuotas sin interés con bancos seleccionados en temporada baja.\\n* Transferencias bancarias: Aceptadas en pesos argentinos (ARS) y dólares estadounidenses (USD). El comprobante debe enviarse antes de las 18:00 hs para mantener la tarifa congelada.\\n* Efectivo en dólares estadounidenses (USD): Únicamente se reciben billetes sin marcas, sin sellos y sin roturas (edición \\\"cara grande\\\" o \\\"cinta azul\\\"). No se aceptan billetes \\\"cara chica\\\" ni deteriorados.\",\n            \"items\": [\n              {\n                \"type\": \"text\",\n                \"md\": \"Tarjetas de crédito y débito: Visa, Mastercard y American Express. Se permite el pago en hasta 6 cuotas sin interés con bancos seleccionados en temporada baja.\",\n                \"value\": \"Tarjetas de crédito y débito: Visa, Mastercard y American Express. Se permite el pago en hasta 6 cuotas sin interés con bancos seleccionados en temporada baja.\"\n              },\n              {\n                \"type\": \"text\",\n                \"md\": \"Transferencias bancarias: Aceptadas en pesos argentinos (ARS) y dólares estadounidenses (USD). El comprobante debe enviarse antes de las 18:00 hs para mantener la tarifa congelada.\",\n                \"value\": \"Transferencias bancarias: Aceptadas en pesos argentinos (ARS) y dólares estadounidenses (USD). El comprobante debe enviarse antes de las 18:00 hs para mantener la tarifa congelada.\"\n              },\n              {\n                \"type\": \"text\",\n                \"md\": \"Efectivo en dólares estadounidenses (USD): Únicamente se reciben billetes sin marcas, sin sellos y sin roturas (edición \\\"cara grande\\\" o \\\"cinta azul\\\"). No se aceptan billetes \\\"cara chica\\\" ni deteriorados.\",\n                \"value\": \"Efectivo en dólares estadounidenses (USD): Únicamente se reciben billetes sin marcas, sin sellos y sin roturas (edición \\\"cara grande\\\" o \\\"cinta azul\\\"). No se aceptan billetes \\\"cara chica\\\" ni deteriorados.\"\n              }\n            ],\n            \"ordered\": false\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"### 1.2 Confirmación de Reservas\",\n            \"level\": 3,\n            \"value\": \"1.2 Confirmación de Reservas\"\n          },\n          {\n            \"type\": \"text\",\n            \"md\": \"Toda reserva requiere un pago inicial del 30% del valor total del paquete en concepto de seña. El saldo restante debe ser abonado con un mínimo de 15 días de anticipación a la fecha de salida. Si el saldo no es saldado en la fecha límite, la reserva será cancelada automáticamente sin derecho a devolución de la seña.\",\n            \"value\": \"Toda reserva requiere un pago inicial del 30% del valor total del paquete en concepto de seña. El saldo restante debe ser abonado con un mínimo de 15 días de anticipación a la fecha de salida. Si el saldo no es saldado en la fecha límite, la reserva será cancelada automáticamente sin derecho a devolución de la seña.\"\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"## 2. POLÍTICAS DE CANCELACIÓN, REPROGRAMACIÓN Y REEMBOLSOS\",\n            \"level\": 2,\n            \"value\": \"2. POLÍTICAS DE CANCELACIÓN, REPROGRAMACIÓN Y REEMBOLSOS\"\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"### 2.1 Cancelaciones por Parte del Pasajero\",\n            \"level\": 3,\n            \"value\": \"2.1 Cancelaciones por Parte del Pasajero\"\n          },\n          {\n            \"type\": \"text\",\n            \"md\": \"Las solicitudes de cancelación deben presentarse formalmente por escrito. Las devoluciones se aplican según el tiempo de anticipación respecto a la fecha del viaje:\",\n            \"value\": \"Las solicitudes de cancelación deben presentarse formalmente por escrito. Las devoluciones se aplican según el tiempo de anticipación respecto a la fecha del viaje:\"\n          },\n          {\n            \"type\": \"table\",\n            \"md\": \"| Tiempo de anticipación a la salida | Porcentaje de reembolso | Penalidad aplicada |\\n| ---------------------------------- | ----------------------- | ------------------ |\\n| Más de 30 días de anticipación     | 100% de lo abonado      | Sin penalidad ($0) |\\n| Entre 15 y 29 días de anticipación | 50% de lo abonado       | Penalidad del 50%  |\\n| Menos de 15 días de anticipación   | 0% de lo abonado        | Penalidad del 100% |\",\n            \"rows\": [\n              [\n                \"Tiempo de anticipación a la salida\",\n                \"Porcentaje de reembolso\",\n                \"Penalidad aplicada\"\n              ],\n              [\n                \"Más de 30 días de anticipación\",\n                \"100% de lo abonado\",\n                \"Sin penalidad ($0)\"\n              ],\n              [\n                \"Entre 15 y 29 días de anticipación\",\n                \"50% de lo abonado\",\n                \"Penalidad del 50%\"\n              ],\n              [\n                \"Menos de 15 días de anticipación\",\n                \"0% de lo abonado\",\n                \"Penalidad del 100%\"\n              ]\n            ],\n            \"html\": \"<table>\\n<thead>\\n<tr>\\n<th>Tiempo de anticipación a la salida</th>\\n<th>Porcentaje de reembolso</th>\\n<th>Penalidad aplicada</th>\\n</tr>\\n</thead>\\n<tbody>\\n<tr>\\n<td>Más de 30 días de anticipación</td>\\n<td>100% de lo abonado</td>\\n<td>Sin penalidad ($0)</td>\\n</tr>\\n<tr>\\n<td>Entre 15 y 29 días de anticipación</td>\\n<td>50% de lo abonado</td>\\n<td>Penalidad del 50%</td>\\n</tr>\\n<tr>\\n<td>Menos de 15 días de anticipación</td>\\n<td>0% de lo abonado</td>\\n<td>Penalidad del 100%</td>\\n</tr>\\n</tbody>\\n</table>\",\n            \"csv\": \"\\\"Tiempo de anticipación a la salida\\\",\\\"Porcentaje de reembolso\\\",\\\"Penalidad aplicada\\\"\\n\\\"Más de 30 días de anticipación\\\",\\\"100% de lo abonado\\\",\\\"Sin penalidad ($0)\\\"\\n\\\"Entre 15 y 29 días de anticipación\\\",\\\"50% de lo abonado\\\",\\\"Penalidad del 50%\\\"\\n\\\"Menos de 15 días de anticipación\\\",\\\"0% de lo abonado\\\",\\\"Penalidad del 100%\\\"\"\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"### 2.2 Excepción por Razones Médicas\",\n            \"level\": 3,\n            \"value\": \"2.2 Excepción por Razones Médicas\"\n          },\n          {\n            \"type\": \"text\",\n            \"md\": \"En caso de enfermedad sobreviniente o fuerza mayor médica que impida viajar, el pasajero podrá obtener un reembolso del 100% únicamente si presenta un certificado médico oficial que acredite la inasistencia con al menos 48 horas de anticipación al inicio del viaje.\",\n            \"value\": \"En caso de enfermedad sobreviniente o fuerza mayor médica que impida viajar, el pasajero podrá obtener un reembolso del 100% únicamente si presenta un certificado médico oficial que acredite la inasistencia con al menos 48 horas de anticipación al inicio del viaje.\"\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"### 2.3 Reprogramaciones y Cambios de Fecha\",\n            \"level\": 3,\n            \"value\": \"2.3 Reprogramaciones y Cambios de Fecha\"\n          },\n          {\n            \"type\": \"list\",\n            \"md\": \"* Primera reprogramación: Sin costo adicional si se solicita con más de 20 días de anticipación a la fecha original del paquete.\\n* Reprogramación fuera de término: Aplica un costo administrativo fijo de $15,000 ARS por pasajero más la diferencia tarifaria si la nueva fecha corresponde a temporada alta.\",\n            \"items\": [\n              {\n                \"type\": \"text\",\n                \"md\": \"Primera reprogramación: Sin costo adicional si se solicita con más de 20 días de anticipación a la fecha original del paquete.\",\n                \"value\": \"Primera reprogramación: Sin costo adicional si se solicita con más de 20 días de anticipación a la fecha original del paquete.\"\n              },\n              {\n                \"type\": \"text\",\n                \"md\": \"Reprogramación fuera de término: Aplica un costo administrativo fijo de $15,000 ARS por pasajero más la diferencia tarifaria si la nueva fecha corresponde a temporada alta.\",\n                \"value\": \"Reprogramación fuera de término: Aplica un costo administrativo fijo de $15,000 ARS por pasajero más la diferencia tarifaria si la nueva fecha corresponde a temporada alta.\"\n              }\n            ],\n            \"ordered\": false\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"## 3. ESPECIFICACIONES DE PAQUETES Y TOURS\",\n            \"level\": 2,\n            \"value\": \"3. ESPECIFICACIONES DE PAQUETES Y TOURS\"\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"### 3.1 Servicios Incluidos y Excluidos\",\n            \"level\": 3,\n            \"value\": \"3.1 Servicios Incluidos y Excluidos\"\n          },\n          {\n            \"type\": \"list\",\n            \"md\": \"* Servicios Incluidos: Todos los paquetes estándar incluyen pasajes ida y vuelta, alojamiento con desayuno, traslados aeropuerto-hotel-aeropuerto y excursiones especificadas explícitamente en el itinerario.\\n* Servicios Excluidos: Propinas a guías y choferes, bebidas en las comidas no especificadas, asistencia al viajero (salvo que se adicione en la compra) y tasas municipales o turísticas cobradas directamente en el hotel.\",\n            \"items\": [\n              {\n                \"type\": \"text\",\n                \"md\": \"Servicios Incluidos: Todos los paquetes estándar incluyen pasajes ida y vuelta, alojamiento con desayuno, traslados aeropuerto-hotel-aeropuerto y excursiones especificadas explícitamente en el itinerario.\",\n                \"value\": \"Servicios Incluidos: Todos los paquetes estándar incluyen pasajes ida y vuelta, alojamiento con desayuno, traslados aeropuerto-hotel-aeropuerto y excursiones especificadas explícitamente en el itinerario.\"\n              },\n              {\n                \"type\": \"text\",\n                \"md\": \"Servicios Excluidos: Propinas a guías y choferes, bebidas en las comidas no especificadas, asistencia al viajero (salvo que se adicione en la compra) y tasas municipales o turísticas cobradas directamente en el hotel.\",\n                \"value\": \"Servicios Excluidos: Propinas a guías y choferes, bebidas en las comidas no especificadas, asistencia al viajero (salvo que se adicione en la compra) y tasas municipales o turísticas cobradas directamente en el hotel.\"\n              }\n            ],\n            \"ordered\": false\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"### 3.2 Política de Mascotas en Excursiones\",\n            \"level\": 3,\n            \"value\": \"3.2 Política de Mascotas en Excursiones\"\n          },\n          {\n            \"type\": \"text\",\n            \"md\": \"Por normativas de seguridad operativa y restricciones de las reservas naturales locales, no se admiten mascotas de ningún tipo ni tamaño en excursiones de alta montaña, navegación o trekking náutico. Solo se aceptan perros de asistencia acreditados legalmente con aviso previo de 72 horas.\",\n            \"value\": \"Por normativas de seguridad operativa y restricciones de las reservas naturales locales, no se admiten mascotas de ningún tipo ni tamaño en excursiones de alta montaña, navegación o trekking náutico. Solo se aceptan perros de asistencia acreditados legalmente con aviso previo de 72 horas.\"\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"### 3.3 Equipaje Permitido\",\n            \"level\": 3,\n            \"value\": \"3.3 Equipaje Permitido\"\n          },\n          {\n            \"type\": \"list\",\n            \"md\": \"* Vuelos Nacionales: Permiten 1 mochila de mano (hasta 6 kg) y 1 equipaje despachado en bodega (hasta 15 kg).\\n* Exceso de equipaje: El cobro por kilo excedente se realiza directamente en la terminal o aeropuerto según la tarifa vigente de la aerolínea operadora.\",\n            \"items\": [\n              {\n                \"type\": \"text\",\n                \"md\": \"Vuelos Nacionales: Permiten 1 mochila de mano (hasta 6 kg) y 1 equipaje despachado en bodega (hasta 15 kg).\",\n                \"value\": \"Vuelos Nacionales: Permiten 1 mochila de mano (hasta 6 kg) y 1 equipaje despachado en bodega (hasta 15 kg).\"\n              },\n              {\n                \"type\": \"text\",\n                \"md\": \"Exceso de equipaje: El cobro por kilo excedente se realiza directamente en la terminal o aeropuerto según la tarifa vigente de la aerolínea operadora.\",\n                \"value\": \"Exceso de equipaje: El cobro por kilo excedente se realiza directamente en la terminal o aeropuerto según la tarifa vigente de la aerolínea operadora.\"\n              }\n            ],\n            \"ordered\": false\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"## 4. PREGUNTAS FRECUENTES Y OPERATIVA GENERAL (FAQ)\",\n            \"level\": 2,\n            \"value\": \"4. PREGUNTAS FRECUENTES Y OPERATIVA GENERAL (FAQ)\"\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"### 4.1 ¿Qué sucede si el tour se suspende por mal tiempo?\",\n            \"level\": 3,\n            \"value\": \"4.1 ¿Qué sucede si el tour se suspende por mal tiempo?\"\n          },\n          {\n            \"type\": \"text\",\n            \"md\": \"Si las condiciones climáticas impiden la realización de una excursión programada, Laguna Viajes reprogramará la actividad dentro de los días de permanencia del cliente. Si no fuera posible la reprogramación por falta de tiempo, se emitirá un voucher de crédito equivalente al valor total de esa excursión.\",\n            \"value\": \"Si las condiciones climáticas impiden la realización de una excursión programada, Laguna Viajes reprogramará la actividad dentro de los días de permanencia del cliente. Si no fuera posible la reprogramación por falta de tiempo, se emitirá un voucher de crédito equivalente al valor total de esa excursión.\"\n          },\n          {\n            \"type\": \"heading\",\n            \"md\": \"### 4.2 ¿Cómo funciona el beneficio de asistencia al viajero?\",\n            \"level\": 3,\n            \"value\": \"4.2 ¿Cómo funciona el beneficio de asistencia al viajero?\"\n          },\n          {\n            \"type\": \"text\",\n            \"md\": \"La cobertura médica estándar cubre emergencias médicas hasta USD 10,000 por evento. Para activar la atención, el cliente debe comunicarse inmediatamente con la central telefónica de emergencias indicada en su voucher antes de acudir a cualquier centro médico privado.\",\n            \"value\": \"La cobertura médica estándar cubre emergencias médicas hasta USD 10,000 por evento. Para activar la atención, el cliente debe comunicarse inmediatamente con la central telefónica de emergencias indicada en su voucher antes de acudir a cualquier centro médico privado.\"\n          }\n        ],\n        \"page_width\": 612,\n        \"page_height\": 792,\n        \"success\": true\n      }\n    ]\n  },\n  \"metadata\": {\n    \"pages\": [\n      {\n        \"page_number\": 1,\n        \"cost_optimized\": false,\n        \"triggered_auto_mode\": false\n      }\n    ],\n    \"document\": {}\n  },\n  \"forms\": null,\n  \"markdown_full\": null,\n  \"text_full\": null,\n  \"images_content_metadata\": {\n    \"total_count\": 0,\n    \"images\": []\n  },\n  \"job_metadata\": null,\n  \"raw_parameters\": null,\n  \"debug\": null\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -880,
+        256
+      ],
+      "id": "687508a4-3324-4e60-9c40-a387f58cf2b2",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "memoryKey": {
+          "__rl": true,
+          "value": "Politicas_Laguna_Viajes",
+          "mode": "list"
+        },
+        "clearStore": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        -672,
+        256
+      ],
+      "id": "e0baa22b-0cb3-4cb2-bd69-73ac06befd58",
+      "name": "Simple Vector Store"
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "fuente",
+                "value": "Menaul_Laguna_Viajes_v3.2"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -704,
+        480
+      ],
+      "id": "dd38e674-e074-458c-86dd-1dd2fd0be140",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 800,
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        640
+      ],
+      "id": "0fb2550d-c5be-4492-982a-6e04b3500c62",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -864,
+        480
+      ],
+      "id": "45d12f66-10b2-485f-893e-a719d96110b2",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ky2g0NfpW1B3Wtrr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "sa esta herramienta para buscar información oficial sobre políticas de pago, cancelaciones, reembolsos, equipaje y FAQ de Laguna Viajes. Siempre consultala antes de responder preguntas de política o servicio.",
+        "memoryKey": {
+          "__rl": true,
+          "value": "Politicas_Laguna_Viajes",
+          "mode": "list",
+          "cachedResultName": "Politicas_Laguna_Viajes"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        864,
+        672
+      ],
+      "id": "5a62ddf9-26cc-4aab-a3f7-31081e51177b",
+      "name": "Simple Vector Store1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        864,
+        832
+      ],
+      "id": "11ad36c7-81ea-4435-8453-89057426a39b",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ky2g0NfpW1B3Wtrr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Vector Store\nGeneración del Vector Store",
+        "height": 672,
+        "width": 864,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        128
+      ],
+      "id": "47f06914-86a5-4a4f-9dcb-a2d1e9e8950e",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "## Consulta del Vector Store\nTop-K 4\nMinimum Score 0.75",
+        "height": 432,
+        "width": 336,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        800,
+        560
+      ],
+      "id": "830a8ca6-7ce7-4868-bb97-e30e56a50fa0",
+      "name": "Sticky Note7"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Busca destinos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DESTINOS_Y_PRECIOS": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Busca destinos",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Busca destinos": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente IA": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Busca destinos",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent - Busca destinos",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Simple Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Simple Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Simple Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Busca destinos",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Simple Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2ff35244-d95d-4d25-b4e9-2409a9449d4c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0219638d0654bd80deed5643ce2fbad3b37709f980837c64c229057e9d690a61"
+  },
+  "id": "7B5qvfoVW2SXx8Y3",
+  "tags": []
+}
