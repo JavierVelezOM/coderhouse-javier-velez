@@ -73,7 +73,7 @@ flowchart TD
         JUDGE --> GATE{"Exactitud Factual >= 4?"}
         
         Ruta Aprobada
-        GATE --> |SÍ (Aprobado)| SLACK_SALES["Slack #ventas-laguna"]
+        SÍ (Aprobado)| SLACK_SALES ["Slack #ventas-laguna"]
         SLACK_SALES --> AT_OK[("Airtable: Upsert Lead Aprobado")]
         
         %% Ruta HITL
