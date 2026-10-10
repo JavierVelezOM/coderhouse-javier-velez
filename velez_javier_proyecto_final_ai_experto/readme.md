@@ -72,8 +72,8 @@ flowchart TD
         W2_START --> JUDGE["Gemini: Evaluación JSON Schema (1-5)"]
         JUDGE --> GATE{"Exactitud Factual >= 4?"}
         
-        %% Ruta Aprobada
-        GATE -->|SÍ (Aprobado)| SLACK_SALES["Slack #ventas-laguna"]
+        Ruta Aprobada
+        GATE --> |SÍ (Aprobado)| SLACK_SALES["Slack #ventas-laguna"]
         SLACK_SALES --> AT_OK[("Airtable: Upsert Lead Aprobado")]
         
         %% Ruta HITL
