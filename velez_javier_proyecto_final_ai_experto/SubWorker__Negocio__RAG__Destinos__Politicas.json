@@ -1,0 +1,290 @@
+{
+  "name": "SubWorker__Negocio__RAG__Destinos__Politicas",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## FASE 1: INGESTA DOCUMENTAL RAG\n- Consulta Google Sheet oficial de Destinos y Precios.\n- Consulta Google Doc de Políticas y Reembolsos.\n- Unifica la base de conocimiento contextual.",
+        "height": 548,
+        "width": 1116,
+        "color": 4
+      },
+      "id": "5c9534b1-d9a0-4c68-a01f-f27c94d82f3f",
+      "name": "Sticky Note - RAG Ingesta",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FASE 2: RAZONADOR GEMINI CON DISCIPLINA RAG\n- Prohibición de alucinación.\n- Obligatoriedad de citar cláusulas y tablas.\n- Si no está en las fuentes: responde 'NO SÉ'.\n- Clasificación: CONSULTA_GENERAL vs COTIZACION.",
+        "height": 548,
+        "width": 484,
+        "color": 5
+      },
+      "id": "7b4f5f99-c829-4597-b786-08ad24590c58",
+      "name": "Sticky Note - LLM Razonador",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FASE 3: NORMALIZACIÓN DE SALIDA\n- Estructura JSON para el sub-workflow Supervisor.\n- Asocia metadatos, intención detectada y fuentes.",
+        "height": 548,
+        "width": 424,
+        "color": 2
+      },
+      "id": "3eef1ec4-7919-416a-b989-eb820c64ee0d",
+      "name": "Sticky Note - Salida Worker",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        464,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A",
+          "mode": "list",
+          "cachedResultName": "DESTINOS_Y_PRECIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "DESTINOS_Y_PRECIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-68k9KqTPfwf1ld0kFQTxDZ453vw8226KVMIAvhK7_A/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "ee0b4110-318b-404d-8bc4-fd2d8790b480",
+      "name": "Google Sheets: Catálogo Destinos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -880,
+        -48
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "LsW2dPdApyCRgfTF",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1IFy7fWMneZak8lgrg2Mr7yIB8ad7LC5C-2Rgs5tJXEM",
+          "mode": "list",
+          "cachedResultName": "Viajes Laguna - Políticas de la Empresa, Cancelaciones y Reembolsos",
+          "cachedResultUrl": "https://docs.google.com/document/d/1IFy7fWMneZak8lgrg2Mr7yIB8ad7LC5C-2Rgs5tJXEM/edit?usp=drivesdk"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "text/plain"
+            }
+          }
+        }
+      },
+      "id": "883cabec-cfcb-4f7f-aa55-916659f0bcaf",
+      "name": "Google Drive: Políticas y Reembolsos",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -656,
+        -48
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "LwKY4ZAP4F4PvmCs",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Obtener datos del disparador (con respaldo por si pruebas manualmente en el lienzo)\nlet triggerData = {};\ntry {\n  const triggerNode = $('When Executed by Another Workflow');\n  if (triggerNode && triggerNode.first()) {\n    triggerData = triggerNode.first().json;\n  }\n} catch (e) {\n  triggerData = $('When Executed by Another Workflow').first().json.chatInput;\n}\n\n// 2. Obtener destinos directamente del nodo de Google Sheets\nconst sheetItems = $('Google Sheets: Catálogo Destinos').all().map(i => i.json);\nconst contextoDestinos = JSON.stringify(sheetItems, null, 2);\n\n// 3. Obtener políticas directamente del nodo Extract from File (nunca con $input)\nconst extractNode = $('Extract from File').first().json;\nconst contextoPoliticas = extractNode.data || extractNode.fileContent || '';\n\n// 4. Retornar contexto unificado\nreturn [{\n  json: {\n    ...triggerData,\n    contextoRAG: `--- CATÁLOGO DE DESTINOS Y TARIFAS (Google Sheets) ---\\n${contextoDestinos}\\n\\n--- POLÍTICAS OFICIALES Y REEMBOLSOS (Google Docs) ---\\n${contextoPoliticas}`\n  }\n}];"
+      },
+      "id": "96d37ffb-c819-4586-b7b8-33ffad8bc780",
+      "name": "Consolidar Contexto RAG",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    \"contents\": [\n      {\n        \"parts\": [\n          {\n            \"text\": `Eres el Agente Oficial de Viajes Laguna, especialista en viajes desde México hacia Sudamérica y Europa.\n\nREGLAS DE ORO DE RAG (GRADO INDUSTRIAL):\n1. Responde ÚNICAMENTE con los datos suministrados EN $json.contextoRAG.\n2. CITAS OBLIGATORIAS: Debes citar explícitamente la fuente de cada afirmación usando formato formal: [Fuente: Manual de Políticas - Cláusula X.X] o [Fuente: Catálogo de Destinos - Fila X].\n3. REGLA 'NO SÉ': Si la pregunta del usuario indaga sobre condiciones, promociones o destinos no incluidos en el CONTEXTO RAG, di textualmente: 'No sé. No dispongo de esa información oficial en nuestro manual ni catálogo de Viajes Laguna.'\n4. CLASIFICACIÓN DE INTENCIÓN:\n   - 'COTIZACION': Si el usuario pide un presupuesto personalizado, solicita fechas concretas, número de pasajeros o intención explícita de compra/reserva.\n   - 'CONSULTA_GENERAL': Si pregunta sobre requisitos, normativas de cancelación, visas o tarifas de referencia.\n\nFORMATO DE SALIDA (JSON ÚNICAMENTE):\n{\n  \"propuestaRespuesta\": \"Texto de la respuesta para el usuario con citas explícitas\",\n  \"intencion\": \"COTIZACION | CONSULTA_GENERAL\",\n  \"requiereVentasSlack\": true,\n  \"fuentesCitadas\": [\"Cláusula 3.1\", \"Destinos Europa\"],\n  \"resumenLead\": {\n    \"destinoInteres\": \"...\",\n    \"pasajeros\": \"...\",\n    \"fechasAprox\": \"...\"\n  }\n}\n\nCONTEXTO RAG:\n$json.contextoRAG\n\nMENSAJE DEL USUARIO:\n$json.chatInput`\n          }\n        ]\n      }\n    ],\n    \"generationConfig\": {\n      \"temperature\": 0.1,\n      \"responseMimeType\": \"application/json\"\n    }\n  }\n}}",
+        "options": {}
+      },
+      "id": "bffbd7f9-2a93-4495-b520-0a5c152c0e84",
+      "name": "Gemini 1.5 Flash: Agente & RAG",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        128,
+        -48
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vNEKkWwhHQs0axth",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nlet parsedOutput = {};\ntry {\n  const rawText = response.candidates[0].content.parts[0].text;\n  parsedOutput = JSON.parse(rawText);\n} catch (e) {\n  parsedOutput = {\n    propuestaRespuesta: 'No sé. No dispongo de esa información en los registros actuales.',\n    intencion: 'CONSULTA_GENERAL',\n    requiereVentasSlack: false,\n    fuentesCitadas: []\n  };\n}\n\nconst prevData = $('Consolidar Contexto RAG').first().json;\n\nreturn [{\n  json: {\n    ...prevData,\n    ...parsedOutput\n  }\n}];"
+      },
+      "id": "bfc05176-2c3b-4e2f-b339-ab03eefdbbb0",
+      "name": "Parsear Propuesta Worker 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -448,
+        -48
+      ],
+      "id": "2d2fd3e1-ceee-4aff-bc55-b08f4dd9d54b",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"chatInput\": \"Hola me puedes decir las políticas de reembolso?\",\n  \"sessionId\": \"839173147ea747aaab4bc63d23ce993c\",\n  \"email\": \"jvelez_24@hotmail.com\",\n  \"traceId\": \"VL-83917314-1791583812189\",\n  \"leadExist\": true,\n  \"airtableRecordId\": \"recG1pBwzBej4PERB\",\n  \"requiresEmailPrompt\": true  \n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1104,
+        -48
+      ],
+      "id": "235a9be5-745c-4895-a723-8a365a40a957",
+      "name": "When Executed by Another Workflow",
+      "alwaysOutputData": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets: Catálogo Destinos": {
+      "main": [
+        [
+          {
+            "node": "Google Drive: Políticas y Reembolsos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive: Políticas y Reembolsos": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consolidar Contexto RAG": {
+      "main": [
+        [
+          {
+            "node": "Gemini 1.5 Flash: Agente & RAG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 1.5 Flash: Agente & RAG": {
+      "main": [
+        [
+          {
+            "node": "Parsear Propuesta Worker 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Consolidar Contexto RAG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets: Catálogo Destinos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4d17de09-7a1c-47ff-af25-efe281ed9892",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0219638d0654bd80deed5643ce2fbad3b37709f980837c64c229057e9d690a61"
+  },
+  "id": "A8ePKCUoeHdphDfY",
+  "tags": []
+}

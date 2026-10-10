@@ -1,0 +1,550 @@
+{
+  "name": "SubWorker__Supervisor__AI_as_Judge__Gobernanza",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## FASE 1: AUDITORÍA ACTIVA (AI-AS-A-JUDGE)\n- Recibe propuesta del Worker 1.\n- Evalúa con Gemini bajo rúbrica JSON Schema.\n- Criterios: exactitud_factual, apego_politicas, citas.",
+        "height": 452,
+        "width": 492,
+        "color": 7
+      },
+      "id": "37429c69-c4b7-4ed8-9b7f-a1ea61c03732",
+      "name": "Sticky Note - Juez QA",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FASE 2: PUERTA DE GOBERNANZA (UMBRAL >= 4)\n- Si exactitud_factual >= 4: APROBADO.\n- Si exactitud_factual < 4: CONGELAR AUTONOMÍA.",
+        "height": 452,
+        "width": 540,
+        "color": 3
+      },
+      "id": "42f3e27a-130c-4b11-9f84-22252d88231a",
+      "name": "Sticky Note - Quality Gate",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FASE 3A: RAMA APROBADA (DESPACHO)\n- Cotizaciones -> Slack #ventas-laguna.\n- Consolidación en CRM Airtable (Leads).",
+        "height": 328,
+        "width": 516,
+        "color": 2
+      },
+      "id": "f7ff357d-ca4e-4dac-9fc5-f06749983218",
+      "name": "Sticky Note - Aprobado",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        176,
+        -368
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FASE 3B: COLA HUMANA (HITL)\n- Alerta inmediata en Slack #cola-aprobacion-hitl.\n- Respaldo de incidencia en Gmail.\n- Congelamiento de respuesta en Airtable.",
+        "height": 360,
+        "width": 516
+      },
+      "id": "0580544f-8e65-4436-b5cd-260d40918ed1",
+      "name": "Sticky Note - HITL",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        176,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  JSON.stringify({\n    contents: [\n      {\n        parts: [\n          {\n            text: `Eres el Supervisor Al-as-a-Judge de Viajes Laguna. Tu misión es auditar de forma implacable la propuesta del agente antes de tocar el CRM o hablar con el cliente.\n\nCRITERIOS DE AUDITORÍA (Rango 1 a 5):\n1. exactitud_factual: ¿Cada dato numérico o de destino está en las fuentes sin alucinación?\n2. apego_politicas: ¿Cumple con las penalizaciones y plazos oficiales?\n3. fidelidad_citas: ¿Cita con metadatos reales o inventó referencias?\n\nREGLA DE BLOQUEO:\nSi exactitud_factual < 4 o apego_politicas < 4, el estado DEBE ser 'RECHAZADO_HITL'.\n\nFORMATO DE SALIDA (JSON ÚNICAMENTE):\n{\n  \"exactitud_factual\": 5,\n  \"apego_politicas\": 5,\n  \"fidelidad_citas\": 5,\n  \"score_promedio\": 5.0,\n  \"dictamen\": \"APROBADO\",\n  \"justificacion_auditoria\": \"Explicación analítica del veredicto...\"\n}\n\nCONSULTA ORIGINAL:\n$json.chatInput\n\nPROPUESTA EVALUADA:\n$json.propuestaRespuesta`\n          }\n        ]\n      }\n    ],\n    generationConfig: {\n      temperature: 0.0,\n      responseMimeType: \"application/json\"\n    }\n  })\n}}",
+        "options": {}
+      },
+      "id": "a6dadc8d-ae89-48c7-b964-4d19fa7ab8be",
+      "name": "Gemini: AI-as-a-Judge QA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -608,
+        -80
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vNEKkWwhHQs0axth",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let judgeRubric = {};\ntry {\n  const rawText = $input.first().json.candidates[0].content.parts[0].text\n  judgeRubric = JSON.parse(rawText);\n} catch (e) {\n  judgeRubric = {\n    exactitud_factual: 1,\n    apego_politicas: 1,\n    fidelidad_citas: 1,\n    score_promedio: 1.0,\n    dictamen: 'RECHAZADO_HITL',\n    justificacion_auditoria: 'Fallo al parsear rúbrica de auditoría. Se bloquea autonomía por seguridad.'\n  };\n}\n\nconst prevData = $('When Executed by Another Workflow').first().json;\nconst isApproved = judgeRubric.exactitud_factual >= 4 && judgeRubric.dictamen === 'APROBADO';\n\nreturn [{\n  json: {\n    ...prevData,\n    auditoriaJuez: judgeRubric,\n    isApproved\n  }\n}];"
+      },
+      "id": "5f6ecdbf-7f77-437f-97e7-1c88ef4506b6",
+      "name": "Evaluar Umbral (Quality Gate)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isApproved }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "9dd2dd64-d96f-4474-8714-9a4052a76568",
+      "name": "¿Aprobado por el Juez?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C8AG3HP0U",
+          "mode": "list",
+          "cachedResultName": "ventas-laguna"
+        },
+        "text": "=🛎️ *NUEVA COTIZACIÓN VALIDADA POR EL JUEZ (Score: {{$json.auditoriaJuez.exactitud_factual}}/5)*\n*Cliente:* {{ $('Evaluar Umbral (Quality Gate)').item.json.email }}\n*SSID:* {{ $('Evaluar Umbral (Quality Gate)').item.json.sessionId }}\n*TraceID:* {{ $('Evaluar Umbral (Quality Gate)').item.json.traceId }}\n*Detalles:* {{ $('Evaluar Umbral (Quality Gate)').item.json.chatInput }}\n*Propuesta Validada:* {{ $('Evaluar Umbral (Quality Gate)').item.json.propuestaRespuesta }}\n*Acción:* Tomar contacto comercial por Slack o Email.",
+        "otherOptions": {}
+      },
+      "id": "6eb66c1c-179a-4ed5-95e3-b21514a85ba0",
+      "name": "Slack: Despachar a Ventas",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        272,
+        -224
+      ],
+      "webhookId": "32d85d37-2bcd-43d0-b6bf-f3a32fbe9f55",
+      "credentials": {
+        "slackApi": {
+          "id": "hPGRINI5ZyuAzADB",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "app53aNonI1i8GLFO",
+          "mode": "list",
+          "cachedResultName": "ViajesLaguna",
+          "cachedResultUrl": "https://airtable.com/app53aNonI1i8GLFO"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblpCknIhnkzyo18p",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/app53aNonI1i8GLFO/tblpCknIhnkzyo18p"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ScoreJuez": "={{ $('Evaluar Umbral (Quality Gate)').item.json.auditoriaJuez.score_promedio }}",
+            "id": "={{ $('Evaluar Umbral (Quality Gate)').item.json.airtableRecordId }}",
+            "ssid": "={{ $('Evaluar Umbral (Quality Gate)').item.json.sessionId }}",
+            "email": "={{ $('Evaluar Umbral (Quality Gate)').item.json.email }}",
+            "TraceId": "={{ $('Evaluar Umbral (Quality Gate)').item.json.traceId }}",
+            "Intencion": "={{ $('Evaluar Umbral (Quality Gate)').item.json.intencion }}",
+            "Dictamen": "={{ $('Evaluar Umbral (Quality Gate)').item.json.auditoriaJuez.dictamen }}",
+            "HistorialConversacion": "={{ $('Evaluar Umbral (Quality Gate)').item.json.chatInput }}",
+            "resumenLead": "={{ $('Evaluar Umbral (Quality Gate)').item.json.resumenLead }}",
+            "Estado": "Ventas"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "ssid",
+              "displayName": "ssid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "TraceId",
+              "displayName": "TraceId",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Intencion",
+              "displayName": "Intencion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ScoreJuez",
+              "displayName": "ScoreJuez",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Dictamen",
+              "displayName": "Dictamen",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "APROBADO",
+                  "value": "APROBADO"
+                },
+                {
+                  "name": "RECHAZADO_HITL",
+                  "value": "RECHAZADO_HITL"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "HistorialConversacion",
+              "displayName": "HistorialConversacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "FechaCreacion",
+              "displayName": "FechaCreacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "UltimaModificacion",
+              "displayName": "UltimaModificacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "resumenLead",
+              "displayName": "resumenLead",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "a6eb40d1-9338-4653-bc48-03c8435d7e98",
+      "name": "Airtable: Consolidar Aprobado",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        512,
+        -224
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "3oGDuh6GIdV7Hr9X",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C88PMJS2V",
+          "mode": "list",
+          "cachedResultName": "cola-aprobacion-hitl"
+        },
+        "text": "=⛔ *AUTONOMÍA CONGELADA - INTERVENCIÓN HUMANA REQUERIDA*\n*Score Factual:* {{ $json.auditoriaJuez.score_promedio }}/5\n*Dictamen:* {{$json.auditoriaJuez.dictamen}}\n*Motivo:* {{$json.auditoriaJuez.justificacion_auditoria}}\n*Mensaje del Cliente:* {{$json.chatInput}}\n*Respuesta Bloqueada:* {{$json.propuestaRespuesta}}\n*TraceID:* {{$json.traceId}}",
+        "otherOptions": {}
+      },
+      "id": "821d527c-cfdd-4f63-b7f3-fb050a842d0c",
+      "name": "Slack: Alerta HITL Bloqueo",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        272,
+        176
+      ],
+      "webhookId": "c5269500-c00d-47bf-a2d0-c5cc5ca16819",
+      "credentials": {
+        "slackApi": {
+          "id": "hPGRINI5ZyuAzADB",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "jvelez_24@hotmail.com",
+        "subject": "=Auditoría Alerta HITL: {{ $('Evaluar Umbral (Quality Gate)').item.json.traceId }}",
+        "emailType": "text",
+        "message": "=Se ha congelado la respuesta al cliente {{ $('Evaluar Umbral (Quality Gate)').item.json.email }} debido a un puntaje de factualidad inferior a 4. Favor de revisar la cola de aprobación.",
+        "options": {}
+      },
+      "id": "b7ed49e2-c9f8-4c4a-a217-f52efc34d113",
+      "name": "Gmail: Notificar Incidencia",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        496,
+        176
+      ],
+      "webhookId": "fe8aa69a-59ff-4e62-9549-715560a0b7e7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hy8I20ayRpKCrVqn",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nlet finalMsg = '';\nif (input.isApproved) {\n  finalMsg = input.propuestaRespuesta;\n} else {\n  finalMsg = 'Gracias por comunicarte con Viajes Laguna. Tu consulta requiere atención personalizada de un asesor senior. Un especialista de nuestro equipo de ventas revisará tu caso y te responderá a la brevedad.';\n}\n\nreturn [{\n  json: {\n    ...input,\n    mensajeClienteFinal: finalMsg\n  }\n}];"
+      },
+      "id": "e3861aa3-553c-4b20-a5f7-0a3dc1f5a093",
+      "name": "Preparar Salida a Manager",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n\t\"chatInput\": \"Hola me puedes decir las políticas de reembolso?\",\n\t\"sessionId\": \"839173147ea747aaab4bc63d23ce993c\",\n\t\"email\": \"jvelez_24@hotmail.com\",\n\t\"traceId\": \"VL-83917314-1791583812189\",\n\t\"leadExist\": true,\n\t\"airtableRecordId\": \"recG1pBwzBej4PERB\",\n\t\"requiresEmailPrompt\": true,\n\t\"contextoRAG\": \"\",\t\n\t\"propuestaRespuesta\": \"No sé. No dispongo de esa información oficial en nuestro manual ni catálogo de Viajes Laguna.\",\n\t\"intencion\": \"CONSULTA_GENERAL\",\n\t\"requiereVentasSlack\": false,\n\t\"fuentesCitadas\": [\n\t],\n\t\"resumenLead\": {\n\t\t\"destinoInteres\": \"No especificado\",\n\t\t\"pasajeros\": \"No especificado\",\n\t\t\"fechasAprox\": \"No especificado\"\n\t}  \n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -864,
+        -80
+      ],
+      "id": "4b076fab-c77d-4cc8-bd52-58ddd9bccc68",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gemini: AI-as-a-Judge QA": {
+      "main": [
+        [
+          {
+            "node": "Evaluar Umbral (Quality Gate)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluar Umbral (Quality Gate)": {
+      "main": [
+        [
+          {
+            "node": "¿Aprobado por el Juez?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Aprobado por el Juez?": {
+      "main": [
+        [
+          {
+            "node": "Slack: Despachar a Ventas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack: Alerta HITL Bloqueo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack: Despachar a Ventas": {
+      "main": [
+        [
+          {
+            "node": "Airtable: Consolidar Aprobado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack: Alerta HITL Bloqueo": {
+      "main": [
+        [
+          {
+            "node": "Gmail: Notificar Incidencia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable: Consolidar Aprobado": {
+      "main": [
+        [
+          {
+            "node": "Preparar Salida a Manager",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Notificar Incidencia": {
+      "main": [
+        [
+          {
+            "node": "Preparar Salida a Manager",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Gemini: AI-as-a-Judge QA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a21fed26-9b75-40c5-a7c2-725902376bef",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0219638d0654bd80deed5643ce2fbad3b37709f980837c64c229057e9d690a61"
+  },
+  "id": "JNZgTOJhtnKAOuat",
+  "tags": []
+}

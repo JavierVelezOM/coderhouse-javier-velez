@@ -1,0 +1,596 @@
+{
+  "name": "PROYECTO__FINAL__VIAJES_LAGUNA_(VL)__JAVIER__VELEZ__MAIN_WORKER",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## FASE 1: RECEPCIÓN Y CAPTURA ASINCRÓNICA\n- Chat trigger\n- Normaliza entrada: SSID y Email.\n- Creación de traceId para trazabilidad.  Prefijo VL (Viajes Laguna)",
+        "height": 372,
+        "width": 520,
+        "color": 4
+      },
+      "id": "4367d97d-ae85-44b8-b95b-dcae1abaa087",
+      "name": "Sticky Note - Fase 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FASE 2: GOBERNANZA DE SESIÓN (AIRTABLE)\n- Valida si el cliente ya existe por Email/SSID.\n- Inicializa estado 'En Proceso' (Idempotencia).\n- Previene duplicidad de sesiones concurrentes.",
+        "height": 372,
+        "width": 380,
+        "color": 6
+      },
+      "id": "7b38dd3f-3bed-4b20-95eb-30f60c3492d9",
+      "name": "Sticky Note - Fase 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FASE 4: ORQUESTACIÓN MANAGER-WORKER\n- Sub-workflow 1: Worker Negocio & RAG.\n- Sub-workflow 2: Worker Supervisor AI-as-a-Judge.\n- Devolución de respuesta validada al chat.",
+        "height": 372,
+        "width": 568,
+        "color": 2
+      },
+      "id": "02a356e4-86b7-44cd-9675-93cd4bca42a0",
+      "name": "Sticky Note - Fase 3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## BLINDAJE INDUSTRIAL: ERROR TRIGGER\n- Captura caídas de red o fallas en APIs externas.\n- Alerta al Manager / Equipo técnico por Slack.",
+        "height": 340,
+        "width": 524
+      },
+      "id": "c386044a-566c-4ab7-a6d2-c29c7bb3cf21",
+      "name": "Sticky Note - Errores",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hola! 👋\nMi nombre es Astro. ¿En qué puedo ayudarte hoy?",
+        "options": {}
+      },
+      "id": "c3bc49f7-e1fa-4b56-8aae-b18a0b9bafd4",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -640,
+        64
+      ],
+      "webhookId": "891cee8b-3717-4f8e-8401-2d108f97e72e"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalización de entrada, detección de correo y asignación de traceId\nconst input = $input.first().json;\nconst chatInput = (input.chatInput || '').trim();\nconst sessionId = input.sessionId || 'SESSION-' + Date.now();\n\n// Extracción básica de email si está presente en el mensaje o en variables de sesión\nconst emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})/;\nconst emailMatch = chatInput.match(emailRegex);\nconst email = emailMatch ? emailMatch[1].toLowerCase() : (input.email || '');\n\n// Generación de traceId idempotente para trazabilidad transversal (DMSA)\nconst traceId = 'VL-' + sessionId.substring(0, 8) + '-' + Date.now();\n\nreturn [{\n  json: {\n    chatInput,\n    sessionId,\n    email,\n    traceId,\n    requiresEmailPrompt: !email\n  }\n}];"
+      },
+      "id": "65431731-4b57-4129-ac3c-68e02c923b09",
+      "name": "Validar Email y SSID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -384,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "app53aNonI1i8GLFO",
+          "mode": "list",
+          "cachedResultName": "ViajesLaguna",
+          "cachedResultUrl": "https://airtable.com/app53aNonI1i8GLFO"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblpCknIhnkzyo18p",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/app53aNonI1i8GLFO/tblpCknIhnkzyo18p"
+        },
+        "filterByFormula": "=OR({email}='{{ $('Validar Email y SSID').item.json.email }}', {ssid}='{{ $('Validar Email y SSID').item.json.sessionId }}')",
+        "returnAll": false,
+        "limit": 1,
+        "options": {
+          "fields": [
+            "ssid",
+            "email",
+            "TraceId",
+            "Intencion",
+            "Estado",
+            "ScoreJuez",
+            "Dictamen",
+            "HistorialConversacion",
+            "FechaCreacion",
+            "UltimaModificacion"
+          ],
+          "view": {
+            "__rl": true,
+            "value": "viwM72f0ezvCxpdOA",
+            "mode": "list",
+            "cachedResultName": "Leads",
+            "cachedResultUrl": "https://airtable.com/app53aNonI1i8GLFO/tblpCknIhnkzyo18p/viwM72f0ezvCxpdOA"
+          }
+        }
+      },
+      "id": "67c9cde0-2d76-49ed-88be-f52da3f6e50b",
+      "name": "Airtable: Validar Existencia",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        64
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "3oGDuh6GIdV7Hr9X",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\n// Retorna el mensaje validado por el juez para el componente de chat\nreturn [{\n  json: {\n    output: result.mensajeClienteFinal || result.propuestaRespuesta || 'Tu solicitud ha sido recibida y está en proceso.'\n  }\n}];"
+      },
+      "id": "703b5d78-f06c-4536-972e-2cf058b1e773",
+      "name": "Formatear Respuesta Chat",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        64
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "4a2ec6ab-d05f-4ab9-8d3e-2563af90d9f8",
+      "name": "Error Trigger Global",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BNM2N658F",
+          "mode": "list",
+          "cachedResultName": "todo-leads"
+        },
+        "text": "=🚨 *CRITICAL ALERT - Manager Flow Error*\n*TraceID:* {{$json.execution.id}}\n*Workflow:* {{$json.workflow.name}}\n*Error Message:* {{$json.execution.error.message}}\n*Timestamp:* {{$now.toISO()}}",
+        "otherOptions": {}
+      },
+      "id": "b931494a-c9a9-444d-b024-064ed2ea934d",
+      "name": "Slack: Alertar Error Técnico",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        -400,
+        416
+      ],
+      "webhookId": "375b96c2-1e9b-407b-a4b0-f9eca31055eb",
+      "credentials": {
+        "slackApi": {
+          "id": "hPGRINI5ZyuAzADB",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## PROYECTO FINAL - AI AUTOMATION AVANZADO - MAIN WORKER\n**Alumno:** Javier Vélez\n**Empresa:** Viajes Laguna (VL)",
+        "height": 96,
+        "width": 1968,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        -256
+      ],
+      "id": "8c796962-167e-41dd-aa22-2daeec23bd2a",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "A8ePKCUoeHdphDfY",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/A8ePKCUoeHdphDfY",
+          "cachedResultName": "SubWorker__Negocio__RAG__Destinos__Politicas"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        64
+      ],
+      "id": "6336c3af-eee4-4b65-9dff-56646fea5d38",
+      "name": "SubWorker 1: Negocio__RAG__Destinos__Politicas"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "JNZgTOJhtnKAOuat",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/JNZgTOJhtnKAOuat",
+          "cachedResultName": "SubWorker__Supervisor__AI_as_Judge__Gobernanza"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "leadExist": false,
+            "requiresEmailPrompt": false,
+            "requiereVentasSlack": false
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "chatInput",
+              "displayName": "chatInput",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "sessionId",
+              "displayName": "sessionId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "traceId",
+              "displayName": "traceId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "leadExist",
+              "displayName": "leadExist",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean",
+              "removed": false
+            },
+            {
+              "id": "airtableRecordId",
+              "displayName": "airtableRecordId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "requiresEmailPrompt",
+              "displayName": "requiresEmailPrompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean",
+              "removed": false
+            },
+            {
+              "id": "contextoRAG",
+              "displayName": "contextoRAG",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "propuestaRespuesta",
+              "displayName": "propuestaRespuesta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "intencion",
+              "displayName": "intencion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "requiereVentasSlack",
+              "displayName": "requiereVentasSlack",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean",
+              "removed": false
+            },
+            {
+              "id": "fuentesCitadas",
+              "displayName": "fuentesCitadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "array",
+              "removed": false
+            },
+            {
+              "id": "resumenLead",
+              "displayName": "resumenLead",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1088,
+        64
+      ],
+      "id": "0b200924-4a23-4f8e-a442-3f9329e69506",
+      "name": "SubWorker 2: Supervisor__AI_as_Judge__Gobernanza"
+    },
+    {
+      "parameters": {
+        "content": "## FASE 3: PREPARACIÓN DE DATOS PARA SUBWORKERS\n- Chat Imput, Session Id, TraceId, LeadExist, airtableRecordID.",
+        "height": 368,
+        "width": 448,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        256,
+        -128
+      ],
+      "id": "92bda80c-de29-49fd-92cc-6e5c055e2f10",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b4b7b544-540a-4d86-8963-701934415a0b",
+              "name": "chatInput",
+              "value": "={{ $('Validar Email y SSID').item.json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "1368cd55-2039-4a54-8aae-23b7a11d1d48",
+              "name": "sessionId",
+              "value": "={{ $('Validar Email y SSID').item.json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "f1294c9a-6cef-47d1-b966-c6bbc36a007e",
+              "name": "email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "4c5ddde3-f62b-422c-ba2c-233270d19d0d",
+              "name": "traceId",
+              "value": "={{ $('Validar Email y SSID').item.json.traceId }}",
+              "type": "string"
+            },
+            {
+              "id": "e720fd94-5bef-46e0-a01c-96ec84f5e75f",
+              "name": "=leadExist",
+              "value": "={{ Boolean($json.id) }}",
+              "type": "boolean"
+            },
+            {
+              "id": "1cf3488f-dd0f-4099-9e31-1bff13402097",
+              "name": "airtableRecordId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "ce2c9a94-5235-4c6f-a9ab-2ce06a16b71f",
+              "name": "requiresEmailPrompt",
+              "value": "={{ $('Validar Email y SSID').item.json.requiresEmailPrompt }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        64
+      ],
+      "id": "f5320041-8af9-4848-a509-a01671da29ae",
+      "name": "Prepara datos sub-worker"
+    },
+    {
+      "parameters": {
+        "content": "## FASE 6: RETORNO AL CHAT\n",
+        "height": 368,
+        "width": 496
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        -128
+      ],
+      "id": "896df751-60fb-4345-b34e-73c33edeed90",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validar Email y SSID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Email y SSID": {
+      "main": [
+        [
+          {
+            "node": "Airtable: Validar Existencia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable: Validar Existencia": {
+      "main": [
+        [
+          {
+            "node": "Prepara datos sub-worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger Global": {
+      "main": [
+        [
+          {
+            "node": "Slack: Alertar Error Técnico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SubWorker 1: Negocio__RAG__Destinos__Politicas": {
+      "main": [
+        [
+          {
+            "node": "SubWorker 2: Supervisor__AI_as_Judge__Gobernanza",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SubWorker 2: Supervisor__AI_as_Judge__Gobernanza": {
+      "main": [
+        [
+          {
+            "node": "Formatear Respuesta Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara datos sub-worker": {
+      "main": [
+        [
+          {
+            "node": "SubWorker 1: Negocio__RAG__Destinos__Politicas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ae1f4db5-c2c5-46f5-8946-a640f90447fe",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0219638d0654bd80deed5643ce2fbad3b37709f980837c64c229057e9d690a61"
+  },
+  "id": "tucH9wNWdwS9io9E",
+  "tags": []
+}
