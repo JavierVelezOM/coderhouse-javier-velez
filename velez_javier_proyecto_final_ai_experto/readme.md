@@ -3,7 +3,7 @@
 ## 📌 Ficha Técnica del Proyecto
 
 | Parámetro | Detalle |
-| :--- | :--- |
+| --- | --- |
 | **Proyecto** | Ecosistema Agéntico Asincrónico, RAG Dual y Gobernanza Activa (AI-as-a-Judge) |
 | **Autor / Consultor** | **Javier Vélez Ríos** |
 | **Programa** | Certificación en AI Automation Avanzado — Módulo 11 (Proyecto Final Integrador) |
@@ -17,7 +17,7 @@
 
 **Viajes Laguna** es una agencia de viajes boutique con sede en México especializada en rutas e itinerarios personalizados hacia **Sudamérica y Europa**. Antes del despliegue de esta solución, la operación comercial enfrentaba tres cuellos de botella críticos:
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                                 DIAGNÓSTICO OPERATIVO                                  │
 ├──────────────────────────┬─────────────────────────────┬───────────────────────────────┤
@@ -30,6 +30,7 @@
 
 ### Solución Diseñada
 Se implementó un ecosistema agéntico modular bajo el patrón **Manager-Worker** con compuerta de calidad estricta (**Quality Gate**) basada en **AI-as-a-Judge**:
+
 * **RAG Dual en Tiempo Real:** Extracción desacoplada desde Google Sheets (tarifas dinámicas) y Google Docs (manual normativo y penalizaciones).
 * **Idempotencia Transversal:** Trazabilidad de punta a punta con identificadores únicos `TraceID` (`VL-TRC-...`) y desduplicación contra Airtable.
 * **Supervisión Ciega y HITL:** Un LLM independiente audita cada respuesta. Si la exactitud factual es menor a 4/5, el sistema **congela la autonomía**, entrega una respuesta de contención al cliente y deriva la alerta a una cola humana (**Human-in-the-Loop**).
@@ -42,42 +43,40 @@ El sistema descarta arquitecturas monolíticas en favor de tres flujos desacopla
 
 ```mermaid
 flowchart TD
-    subgraph S1["1. Flujo Manager (Orquestador & Idempotencia)"]
-        UI(["💬 Chat Trigger (Astro)"]) --> NORM["Validar Email, SSID & Generar TraceID"]
-        NORM --> AT_CHECK[("Airtable: Verificación Idempotencia")]
+    subgraph S1["1. Flujo Manager - Orquestador e Idempotencia"]
+        UI["Chat Trigger Astro"] --> NORM["Validar Email, SSID y Generar TraceID"]
+        NORM --> AT_CHECK[("Airtable: Verificacion Idempotencia")]
         AT_CHECK --> PREP["Preparar Contexto Sub-Workers"]
     end
 
-    subgraph S2["2. Sub-Workflow Worker 1 (Negocio & RAG Contextual)"]
-        PREP -->|Execute Workflow| W1_START(["Trigger Sub-Workflow 1"])
-        W1_START --> G_SHEET[("Google Sheets: Catálogo Destinos")]
-        G_SHEET --> G_DOC[("Google Drive: Descarga Manual Políticas")]
+    subgraph S2["2. Sub-Workflow Worker 1 - Negocio y RAG Contextual"]
+        PREP -->|"Execute Workflow"| W1_START["Trigger Sub-Workflow 1"]
+        W1_START --> G_SHEET[("Google Sheets: Catalogo Destinos")]
+        G_SHEET --> G_DOC[("Google Drive: Descarga Manual Politicas")]
         G_DOC --> EXTRACT["Extract Text from File"]
         EXTRACT --> RAG_MERGE["Consolidar Contexto RAG"]
         RAG_MERGE --> GEM_RAG["Gemini 3.5 Flash: Inferencia con Citas Obligatorias"]
-        GEM_RAG --> PARSE_W1["Normalizar Salida JSON & Intención"]
+        GEM_RAG --> PARSE_W1["Normalizar Salida JSON e Intencion"]
     end
 
-    subgraph S3["3. Sub-Workflow Worker 2 (Supervisor AI-as-a-Judge)"]
-        PARSE_W1 -->|Execute Workflow| W2_START(["Trigger Sub-Workflow 2"])
-        W2_START --> JUDGE["Gemini: Evaluación JSON Schema (1-5)"]
+    subgraph S3["3. Sub-Workflow Worker 2 - Supervisor AI-as-a-Judge"]
+        PARSE_W1 -->|"Execute Workflow"| W2_START["Trigger Sub-Workflow 2"]
+        W2_START --> JUDGE["Gemini: Evaluacion JSON Schema (1-5)"]
         JUDGE --> GATE{"Exactitud Factual >= 4?"}
-        
-        %% Ruta Aprobada
-        GATE -->|SI (Score >= 4)| SLACK_SALES["Slack #ventas-laguna"]
+
+        GATE -->|"SI (Aprobado >= 4)"| SLACK_SALES["Slack #ventas-laguna"]
         SLACK_SALES --> AT_OK[("Airtable: Upsert Lead Aprobado")]
-        
-        %% Ruta HITL
-        GATE -->|NO (Score < 4)| SLACK_HITL["Slack #cola-aprobacion-hitl"]
+
+        GATE -->|"NO (Riesgo o Score < 4)"| SLACK_HITL["Slack #cola-aprobacion-hitl"]
         SLACK_HITL --> GMAIL_ALERT["Gmail: Alerta a Jefatura de Operaciones"]
     end
 
     AT_OK --> RET["Preparar Salida a Manager"]
     GMAIL_ALERT --> RET
-    RET --> CHAT_OUT(["💬 Respuesta Final Formateada al Cliente"])
+    RET --> CHAT_OUT["Respuesta Final Formateada al Cliente"]
 
-    subgraph SEC["Blindaje Industrial & Resiliencia"]
-        ERR_TRIG["Error Trigger Global"] -.-> SLACK_ERR["Slack #todo-leads (Alerta Técnica)"]
+    subgraph SEC["Blindaje Industrial y Resiliencia"]
+        ERR_TRIG["Error Trigger Global"] -.-> SLACK_ERR["Slack #todo-leads (Alerta Tecnica)"]
     end
 
     classDef okNode fill:#e6ffed,stroke:#2ea44f,stroke-width:2px,color:#1b4721;
@@ -96,7 +95,9 @@ flowchart TD
 ### 1. `Main Manager` (`tucH9wNWdwS9io9E`)
 * **Entrada:** `Chat Trigger` conectado al frontend del asistente.
 * **Lógica de Idempotencia:** Extrae expresiones regulares de correo electrónico, sanitiza el identificador de sesión (`sessionId`) y formula consultas relacionales en Airtable:
-  $$\text{Fórmula: } \text{OR}(\{\text{email}\} = \dots, \{\text{ssid}\} = \dots)$$
+
+$$ \text{Fórmula: } \text{OR}(\{\text{email}\} = \dots, \{\text{ssid}\} = \dots) $$
+
 * **Trazabilidad:** Genera el identificador único transversal `VL-[SSID_8]-[TIMESTAMP]`.
 * **Manejo Global de Excepciones:** Nodo `Error Trigger` desacoplado que intercepta cualquier excepción HTTP o timeout y la notifica al canal técnico `#todo-leads` sin romper la conversación.
 
@@ -122,7 +123,7 @@ flowchart TD
 
 A continuación se presentan 3 casos reales de ejecución controlada durante el proceso de validación:
 
-```
+```text
 +──────────────────────────────────────────────────────────────────────────────────────────+
 | CASO 1: Consulta de Políticas de Reembolso (Veredicto: APROBADO)                         |
 +──────────────────────────────────────────────────────────────────────────────────────────+
@@ -169,7 +170,7 @@ A continuación se presentan 3 casos reales de ejecución controlada durante el 
 La tabla `Leads` actúa como el registro auditable de la operación, estructurado con las siguientes variables:
 
 | Campo Airtable | Tipo de Dato | Rol Técnico en la Solución |
-| :--- | :--- | :--- |
+| --- | --- | --- |
 | `email` | `Single Line Text` | Clave primaria funcional para deduplicación e historial |
 | `ssid` | `Single Line Text` | Correlación de hilos del chat web |
 | `TraceId` | `Single Line Text` | Hash de trazabilidad transversal (`VL-[SSID]-[TS]`) |
