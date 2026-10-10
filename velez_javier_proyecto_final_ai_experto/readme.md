@@ -1,14 +1,5 @@
 # ✈️ Despliegue y Gobernanza de un Ecosistema Agéntico Asincrónico y Supervisado para Viajes Laguna
 
-[![n8n](https://img.shields.io/badge/Orchestrator-n8n_v2.21.4-EA4B71?logo=n8n&logoColor=white)](https://n8n.io/)
-[![LLM Engine](https://img.shields.io/badge/LLM-Google_Gemini_3.5_Flash-4285F4?logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
-[![Persistence](https://img.shields.io/badge/CRM%20%26%20Memory-Airtable_API-18BFFF?logo=airtable&logoColor=white)](https://airtable.com/)
-[![Alerts](https://img.shields.io/badge/Notifications-Slack_%26_Gmail-4A154B?logo=slack&logoColor=white)](https://slack.com/)
-[![Architecture](https://img.shields.io/badge/Pattern-Manager--Worker_%7C_HITL-2ea44f)](#-arquitectura-y-patrones-de-diseño)
-[![License](https://img.shields.io/badge/License-MIT-gray.svg)](LICENSE)
-
----
-
 ## 📌 Ficha Técnica del Proyecto
 
 | Parámetro | Detalle |
@@ -72,12 +63,12 @@ flowchart TD
         W2_START --> JUDGE["Gemini: Evaluación JSON Schema (1-5)"]
         JUDGE --> GATE{"Exactitud Factual >= 4?"}
         
-        Ruta Aprobada
-        SÍ (Aprobado)| SLACK_SALES ["Slack #ventas-laguna"]
+        %% Ruta Aprobada
+        GATE -->|SI (Score >= 4)| SLACK_SALES["Slack #ventas-laguna"]
         SLACK_SALES --> AT_OK[("Airtable: Upsert Lead Aprobado")]
         
         %% Ruta HITL
-        GATE -->|NO (Riesgo / Score < 4)| SLACK_HITL["Slack #cola-aprobacion-hitl"]
+        GATE -->|NO (Score < 4)| SLACK_HITL["Slack #cola-aprobacion-hitl"]
         SLACK_HITL --> GMAIL_ALERT["Gmail: Alerta a Jefatura de Operaciones"]
     end
 
